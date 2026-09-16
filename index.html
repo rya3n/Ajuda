@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ponto Seguro | Acolhimento e Emergência contra Abuso e Violência Sexual</title>
+  <meta name="description" content="Terminal de acolhimento humanizado, orientação médica profilática (PEP 72h) e socorro imediato para vítimas de abuso e violência sexual.">
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CSS Principal -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-light" id="appBody">
+
+  <!-- BARRA DE SEGURANÇA E PRIVACIDADE (FIXA NO TOPO) -->
+  <aside class="safety-topbar" aria-label="Barra de segurança e localização de emergência">
+    <div class="topbar-container">
+      <div class="safety-indicator">
+        <span class="pulse-dot"></span>
+        <span class="safety-text"><strong>Espaço Seguro:</strong> Acolhimento a Vítimas de Abuso Sexual • 100% Anônimo</span>
+        
+        <!-- Badge de Localização Real GPS -->
+        <div class="location-badge" id="locationBadge" onclick="promptCustomLocation()" title="Clique para confirmar ou editar o endereço para apresentação">
+          <span class="loc-icon">📍</span>
+          <span class="loc-text" id="headerLocationText">Identificando GPS...</span>
+          <span class="loc-edit-hint">✏️</span>
+        </div>
+      </div>
+      
+      <div class="topbar-actions">
+        <!-- Alternar Modo Totem Urbano de Rua -->
+        <button id="toggleTotemBtn" class="btn-topbar" title="Alternar visão de Totem Urbano de Ponto de Ônibus">
+          <span class="icon">🚏</span>
+          <span class="btn-label">Modo Totem</span>
+        </button>
+
+        <!-- Tema Noturno -->
+        <button id="toggleContrastBtn" class="btn-topbar" title="Modo Noturno / Conforto Visual">
+          <span class="icon">🌙</span>
+        </button>
+
+        <!-- Botão de Saída Rápida de Emergência -->
+        <button id="quickExitBtn" class="btn-quick-exit" title="Sair imediatamente da página (Tecla ESC)">
+          <span class="icon">⚡</span>
+          <span class="text-exit">SAÍDA RÁPIDA</span>
+          <kbd class="kbd-esc">ESC</kbd>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CONTAINER PRINCIPAL DO CHAT -->
+  <div class="totem-frame-wrapper" id="totemWrapper">
+    
+    <!-- CABEÇALHO DO TOTEM (Visível no Modo Totem Urbano) -->
+    <header class="totem-header" id="totemHeader" style="display: none;">
+      <div class="totem-badge">
+        <span class="totem-icon">📍</span>
+        <div>
+          <span class="totem-title">PONTO SEGURO URBANO • APOIO CONTRA A VIOLÊNCIA SEXUAL</span>
+          <span class="totem-subtitle" id="totemLocationSubtitle">Terminal Integrado com Rastreamento GPS e Despacho de Urgência 24h</span>
+        </div>
+      </div>
+      <div class="totem-clock" id="totemClock">12:00</div>
+    </header>
+
+    <!-- TELA PRINCIPAL: CHAT COM A PLANTONISTA ESPECIALIZADA -->
+    <main class="chat-main-container">
+      <div class="chat-card">
+        
+        <!-- Topo da Atendente Especializada -->
+        <header class="chat-header">
+          <div class="assistant-profile">
+            <div class="assistant-avatar human-avatar">
+              <span>👩🏻‍💼</span>
+              <span class="online-indicator"></span>
+            </div>
+            <div class="assistant-info">
+              <h1 class="assistant-name">Clara • Plantonista Especializada em Apoio a Vítimas de Abuso</h1>
+              <p class="assistant-status">
+                <span class="live-tag">● AO VIVO</span> Acolhimento Humanizado 24h • Cuidados Médicos e Proteção
+              </p>
+            </div>
+          </div>
+
+          <div class="chat-header-actions">
+            <!-- Botão de Limpar Conversa -->
+            <button id="clearChatBtn" class="btn-header-action" title="Limpar conversa para privacidade">
+              🗑️ Limpar Conversa
+            </button>
+          </div>
+        </header>
+
+        <!-- Área de Conversa -->
+        <div class="chat-messages" id="chatMessages" role="log" aria-live="polite">
+          <!-- Mensagem Inicial com Foco Explícito em Abuso Sexual -->
+          <div class="chat-msg msg-ai">
+            <div class="msg-bubble">
+              <p>Olá, meu nome é <strong>Clara</strong>. Sou a plantonista especializada em acolhimento e suporte a vítimas de abuso e violência sexual nesta central.</p>
+              <p>Quero que você respire bem fundo e guarde isso com você: <strong>você está em um local seguro agora e você NÃO tem culpa de nada do que aconteceu</strong>. A responsabilidade é única e exclusiva de quem cometeu a violência.</p>
+              <p>Estou conectada em tempo real para te ajudar: <strong>posso enviar a polícia se você estiver em perigo, acionar o SAMU se estiver ferida, te orientar sobre medicamentos profiláticos urgentes (que devem ser tomados em até 72h no hospital) ou apenas te ouvir e acolher</strong>.</p>
+              <p>Me diga o que você está sentindo ou toque em uma das opções abaixo:</p>
+            </div>
+            <span class="msg-time">Agora</span>
+          </div>
+        </div>
+
+        <!-- Botões de Acesso Rápido com Foco em Abuso Sexual -->
+        <div class="chat-quick-replies" id="quickReplies">
+          <button class="quick-chip chip-sos" onclick="sendQuickMessage('Sofri um abuso sexual agora e estou em perigo!')">
+            🚨 Sofri um abuso agora, socorro!
+          </button>
+          <button class="quick-chip chip-sos" onclick="sendQuickMessage('Estou ferida e machucada após a violência')">
+            🏥 Estou ferida / preciso de médico
+          </button>
+          <button class="quick-chip" onclick="sendQuickMessage('O que preciso tomar nas primeiras 72 horas? (PEP / Gravidez)')">
+            ⏱️ Remédios nas primeiras 72h (PEP)
+          </button>
+          <button class="quick-chip" onclick="sendQuickMessage('Acho que fui dopada (boa noite Cinderela / bebida batizada)')">
+            🧪 Acho que fui dopada (bebida)
+          </button>
+          <button class="quick-chip" onclick="sendQuickMessage('Tenho muito medo de denunciar o agressor')">
+            🛡️ Tenho medo de denunciar
+          </button>
+          <button class="quick-chip" onclick="sendQuickMessage('Estou em choque e tendo uma crise de pânico')">
+            😰 Estou em choque / crise de pânico
+          </button>
+          <button class="quick-chip" onclick="sendQuickMessage('Quais cuidados ter com exame de perícia e IML?')">
+            🔍 Exames periciais e cuidados
+          </button>
+        </div>
+
+        <!-- Barra de Entrada de Mensagem -->
+        <form class="chat-input-bar" id="chatForm" onsubmit="handleSendMessage(event)">
+          <input 
+            type="text" 
+            id="chatInput" 
+            placeholder="Pode desabafar ou pedir socorro, este canal é 100% sigiloso..." 
+            autocomplete="off"
+            aria-label="Mensagem para a plantonista"
+            autofocus
+          >
+          <button type="submit" class="btn-send-msg" id="sendBtn" title="Enviar mensagem">
+            <span>Enviar</span>
+            <span class="send-icon">➤</span>
+          </button>
+        </form>
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- TOAST DE NOTIFICAÇÃO -->
+  <div id="toastNotification" class="toast-notification" role="status" aria-live="polite"></div>
+
+  <!-- JAVASCRIPT -->
+  <script src="script.js"></script>
+</body>
+</html>
