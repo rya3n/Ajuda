@@ -237,14 +237,16 @@ body {
    ESTRUTURA PRINCIPAL DO CHAT
    ========================================================================== */
 .totem-frame-wrapper {
-  max-width: 960px;
-  margin: 1rem auto;
+  max-width: 980px;
+  margin: 0.6rem auto;
   width: 100%;
   padding: 0 1rem;
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 75px);
+  height: calc(100vh - 62px);
+  height: calc(100dvh - 62px);
+  min-height: 0;
 }
 
 /* Modo Totem Urbano */
@@ -956,26 +958,70 @@ body.theme-dark .chat-quick-replies::-webkit-scrollbar-thumb:hover {
 }
 
 /* ==========================================================================
-   RESPONSIVIDADE (MOBILE)
+   RESPONSIVIDADE TOTAL (TABLETS, SMARTPHONES E TELAS PEQUENAS)
    ========================================================================== */
+
+/* Tablets e Telas Médias (<= 1024px) */
+@media (max-width: 1024px) {
+  .totem-frame-wrapper {
+    max-width: 100%;
+    padding: 0 0.8rem;
+  }
+}
+
+/* Tablets Verticais e Celulares Grandes (<= 768px) */
 @media (max-width: 768px) {
   .totem-frame-wrapper {
     margin: 0;
     padding: 0;
-    height: calc(100vh - 65px);
+    height: calc(100vh - 56px);
+    height: calc(100dvh - 56px);
+  }
+
+  body.totem-active .totem-frame-wrapper {
+    border-width: 4px;
+    border-radius: 20px;
+    padding: 0.5rem;
+    height: calc(100vh - 60px);
+    height: calc(100dvh - 60px);
   }
 
   .chat-card {
     border-radius: 0;
     border: none;
+    box-shadow: none;
+  }
+
+  .chat-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .assistant-avatar {
+    width: 42px;
+    height: 42px;
+    font-size: 1.35rem;
+  }
+
+  .assistant-name {
+    font-size: 0.95rem;
+  }
+
+  .assistant-status {
+    font-size: 0.75rem;
   }
 
   .chat-messages {
-    padding: 1rem;
+    padding: 1rem 0.85rem;
+    gap: 1rem;
   }
 
   .chat-msg {
-    max-width: 95%;
+    max-width: 92%;
+  }
+
+  .msg-bubble {
+    padding: 0.85rem 1.1rem;
+    font-size: 0.92rem;
   }
 
   .chat-sos-grid, .dispatch-info-grid {
@@ -983,7 +1029,7 @@ body.theme-dark .chat-quick-replies::-webkit-scrollbar-thumb:hover {
   }
 
   .topbar-container {
-    padding: 0.2rem 0;
+    padding: 0.15rem 0;
   }
 
   .safety-text {
@@ -991,10 +1037,207 @@ body.theme-dark .chat-quick-replies::-webkit-scrollbar-thumb:hover {
   }
 
   .location-badge {
-    max-width: 170px;
+    max-width: 190px;
   }
 
   .btn-quick-exit {
+    padding: 0.42rem 0.75rem;
+    font-size: 0.78rem;
+  }
+}
+
+/* Smartphones Padrão (<= 480px) */
+@media (max-width: 480px) {
+  .safety-topbar {
+    padding: 0.4rem 0.75rem;
+  }
+
+  .topbar-container {
+    gap: 0.4rem;
+  }
+
+  .location-badge {
+    max-width: 140px;
+    font-size: 0.72rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  /* Compacta botões do topo */
+  .btn-topbar {
+    padding: 0.4rem 0.55rem;
+    font-size: 0.75rem;
+  }
+
+  .btn-topbar .btn-label {
+    display: none; /* Deixa apenas o ícone no celular */
+  }
+
+  .btn-quick-exit {
+    padding: 0.4rem 0.65rem;
+    font-size: 0.75rem;
+    gap: 0.3rem;
+  }
+
+  .btn-quick-exit .text-exit {
+    font-size: 0.72rem;
+  }
+
+  .kbd-esc {
+    display: none; /* No celular não há tecla ESC */
+  }
+
+  /* Header do Chat no Celular */
+  .chat-header {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .assistant-profile {
+    gap: 0.65rem;
+  }
+
+  .assistant-avatar {
+    width: 38px;
+    height: 38px;
+    font-size: 1.25rem;
+  }
+
+  .assistant-name {
+    font-size: 0.88rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+  }
+
+  .assistant-status {
+    font-size: 0.72rem;
+  }
+
+  .btn-header-action {
+    padding: 0.35rem 0.55rem;
+    font-size: 0.72rem;
+  }
+
+  /* Mensagens e Balões */
+  .chat-messages {
+    padding: 0.75rem 0.65rem;
+    gap: 0.85rem;
+  }
+
+  .chat-msg {
+    max-width: 96%;
+  }
+
+  .msg-bubble {
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 16px;
+  }
+
+  /* Botões Rápidos e Chips */
+  .chat-quick-replies {
+    padding: 0.5rem 0.75rem 0.4rem 0.75rem;
+    gap: 0.4rem;
+  }
+
+  .quick-chip {
     padding: 0.45rem 0.8rem;
+    font-size: 0.78rem;
+  }
+
+  /* Barra de Digitação no Celular */
+  .chat-input-bar {
+    padding: 0.65rem 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .chat-input-bar input {
+    font-size: 16px; /* Evita zoom automático no iOS Safari */
+    padding: 0.7rem 1rem;
+  }
+
+  .btn-send-msg {
+    padding: 0.7rem 1.1rem;
+    font-size: 0.85rem;
+  }
+
+  .btn-send-msg span:first-child {
+    display: none; /* Mostra apenas a seta de envio em telas muito estreitas */
+  }
+
+  .send-icon {
+    font-size: 1rem;
+  }
+
+  /* Botões de Decisão Inline */
+  .inline-action-btns {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-inline-action {
+    width: 100%;
+    justify-content: center;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.82rem;
+  }
+
+  /* Card de Despacho */
+  .dispatch-card {
+    padding: 0.85rem;
+  }
+
+  .dispatch-title {
+    font-size: 0.85rem;
+  }
+
+  .dispatch-info-item {
+    padding: 0.45rem 0.55rem;
+  }
+
+  .dispatch-status-bar {
+    font-size: 0.78rem;
+    padding: 0.5rem 0.65rem;
+  }
+}
+
+/* Telas Muito Pequenas (<= 360px) */
+@media (max-width: 360px) {
+  .location-badge {
+    max-width: 110px;
+  }
+
+  .assistant-name {
+    max-width: 140px;
+    font-size: 0.82rem;
+  }
+
+  .msg-bubble {
+    font-size: 0.86rem;
+  }
+}
+
+/* Ajustes para Telas em Modo Paisagem / Baixa Altura (Ex: Celular deitado) */
+@media (max-height: 520px) {
+  .safety-topbar {
+    padding: 0.3rem 0.75rem;
+  }
+
+  .chat-header {
+    padding: 0.4rem 0.75rem;
+  }
+
+  .assistant-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 1.1rem;
+  }
+
+  .chat-quick-replies {
+    padding: 0.35rem 0.75rem;
+  }
+
+  .chat-input-bar {
+    padding: 0.45rem 0.75rem;
   }
 }
