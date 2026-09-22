@@ -3,156 +3,413 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ponto Seguro | Acolhimento e Emergência contra Abuso e Violência Sexual</title>
-  <meta name="description" content="Terminal de acolhimento humanizado, orientação médica profilática (PEP 72h) e socorro imediato para vítimas de abuso e violência sexual.">
+  <title>Ponto Seguro | Acolhimento, Emergência e Amigos de Confiança</title>
+  <meta name="description" content="Aplicativo de apoio humanizado contra violência e abuso sexual, com contatos de emergência (180, 190, 192, 100), amigos de confiança e IA Gemini blindada.">
   
-  <!-- Google Fonts: Plus Jakarta Sans -->
+  <!-- Google Fonts da Identidade Visual -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Allura&family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
   
   <!-- CSS Principal -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="theme-light" id="appBody">
 
-  <!-- BARRA DE SEGURANÇA E PRIVACIDADE (FIXA NO TOPO) -->
-  <aside class="safety-topbar" aria-label="Barra de segurança e localização de emergência">
-    <div class="topbar-container">
-      <div class="safety-indicator">
-        <span class="pulse-dot"></span>
-        <span class="safety-text"><strong>Espaço Seguro:</strong> Acolhimento a Vítimas de Abuso Sexual • 100% Anônimo</span>
-        
-        <!-- Badge de Localização Real GPS -->
-        <div class="location-badge" id="locationBadge" onclick="promptCustomLocation()" title="Clique para confirmar ou editar o endereço para apresentação">
-          <span class="loc-icon">📍</span>
-          <span class="loc-text" id="headerLocationText">Identificando GPS...</span>
-          <span class="loc-edit-hint">✏️</span>
-        </div>
-      </div>
+  <!-- OVERLAY MOBILE PARA A BARRA LATERAL -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <!-- CONTAINER PRINCIPAL ESTILO CHATGPT -->
+  <div class="chatgpt-layout-container">
+    
+    <!-- ====================================================================
+         BARRA LATERAL (SIDEBAR ESTILO CHATGPT)
+         ==================================================================== -->
+    <aside class="chatgpt-sidebar" id="appSidebar" aria-label="Menu Lateral de Navegação">
       
-      <div class="topbar-actions">
-        <!-- Alternar Modo Totem Urbano de Rua -->
-        <button id="toggleTotemBtn" class="btn-topbar" title="Alternar visão de Totem Urbano de Ponto de Ônibus">
-          <span class="icon">🚏</span>
-          <span class="btn-label">Modo Totem</span>
+      <!-- Topo da Barra: Logo & Botão de Recolher -->
+      <div class="sidebar-header">
+        <div class="sidebar-brand">
+          <span class="brand-leaf-icon">🌿</span>
+          <span class="brand-text">Ponto Seguro</span>
+        </div>
+        <button class="sidebar-toggle-btn" id="closeSidebarBtn" onclick="toggleSidebar()" title="Recolher barra lateral">
+          <span class="toggle-icon">◫</span>
         </button>
+      </div>
 
-        <!-- Tema Noturno -->
-        <button id="toggleContrastBtn" class="btn-topbar" title="Modo Noturno / Conforto Visual">
+      <!-- Botão Novo Acolhimento (+ Novo Chat) -->
+      <div class="sidebar-action-wrap">
+        <button class="btn-new-chat" onclick="startNewChat()" title="Iniciar um novo acolhimento limpo e sigiloso">
+          <span class="btn-icon">＋</span>
+          <span class="btn-text">Novo Acolhimento</span>
+        </button>
+      </div>
+
+      <!-- Conteúdo Rolável da Barra Lateral -->
+      <div class="sidebar-scrollable-content">
+        
+        <!-- SEÇÃO 1: CONTATOS DE EMERGÊNCIA (PARTE SUPERIOR) -->
+        <div class="sidebar-section">
+          <div class="section-title-wrap">
+            <span class="section-title">🚨 EMERGÊNCIA IMEDIATA</span>
+          </div>
+          
+          <ul class="sidebar-nav-list emergency-list">
+            <!-- 180 - Mulher -->
+            <li>
+              <button type="button" class="sidebar-nav-item item-emergency" id="sidebarChannel180" onclick="switchChannel('180')" title="Abrir canal oficial de atendimento da Central 180 (Mulher)">
+                <span class="item-icon">📞</span>
+                <div class="item-details">
+                  <span class="item-name">Central 180 (Mulher)</span>
+                  <span class="item-sub">Apoio e Denúncia 24h</span>
+                </div>
+                <span class="item-badge">Oficial</span>
+              </button>
+            </li>
+
+            <!-- 190 - Polícia Militar -->
+            <li>
+              <button type="button" class="sidebar-nav-item item-emergency item-danger" id="sidebarChannel190" onclick="switchChannel('190')" title="Abrir canal de emergência da Polícia Militar (190)">
+                <span class="item-icon">🚨</span>
+                <div class="item-details">
+                  <span class="item-name">Polícia Militar (190)</span>
+                  <span class="item-sub">COPOM / Viaturas</span>
+                </div>
+                <span class="item-badge badge-red">Urgente</span>
+              </button>
+            </li>
+
+            <!-- 192 - SAMU -->
+            <li>
+              <button type="button" class="sidebar-nav-item item-emergency item-warning" id="sidebarChannel192" onclick="switchChannel('192')" title="Abrir canal de regulação médica do SAMU (192)">
+                <span class="item-icon">🚑</span>
+                <div class="item-details">
+                  <span class="item-name">SAMU 192 (Médico)</span>
+                  <span class="item-sub">Socorro / Ambulância</span>
+                </div>
+                <span class="item-badge badge-amber">Médico</span>
+              </button>
+            </li>
+
+            <!-- 100 - Direitos Humanos -->
+            <li>
+              <button type="button" class="sidebar-nav-item item-emergency" id="sidebarChannel100" onclick="switchChannel('100')" title="Abrir canal da Ouvidoria de Direitos Humanos (Disque 100)">
+                <span class="item-icon">🛡️</span>
+                <div class="item-details">
+                  <span class="item-name">Disque 100</span>
+                  <span class="item-sub">Direitos Humanos</span>
+                </div>
+                <span class="item-badge">Sigiloso</span>
+              </button>
+            </li>
+
+            <!-- Localização GPS Atual -->
+            <li>
+              <button type="button" class="sidebar-nav-item item-location" onclick="copyLocationCoords()" title="Clique para copiar seu endereço GPS">
+                <span class="item-icon">📍</span>
+                <div class="item-details">
+                  <span class="item-name" id="sidebarLocationTitle">Meu Local GPS</span>
+                  <span class="item-sub" id="sidebarLocationSubtitle">Identificando satélite...</span>
+                </div>
+                <span class="item-copy-hint">📋</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <!-- SEÇÃO 2: AMIGOS DE CONFIANÇA (PARTE INFERIOR) -->
+        <div class="sidebar-section">
+          <div class="section-title-wrap">
+            <span class="section-title">👥 AMIGOS DE CONFIANÇA</span>
+            <span class="section-subtitle">Rede Pessoal</span>
+          </div>
+
+          <ul class="sidebar-nav-list friends-list">
+            <!-- AMIGA MARIA -->
+            <li>
+              <button type="button" class="sidebar-nav-item item-friend active" id="sidebarChannelMaria" onclick="switchChannel('maria')" title="Conversar com sua amiga Maria">
+                <div class="friend-avatar-wrap">
+                  <span class="friend-emoji">👩🏻‍💼</span>
+                  <span class="friend-status-dot"></span>
+                </div>
+                <div class="item-details">
+                  <span class="item-name">Maria</span>
+                  <span class="item-sub">Sua Amiga de Confiança</span>
+                </div>
+                <span class="active-indicator-tag">Ativa</span>
+              </button>
+            </li>
+
+            <!-- AMIGO JOÃO -->
+            <li>
+              <button type="button" class="sidebar-nav-item item-friend" id="sidebarChannelJoao" onclick="switchChannel('joao')" title="Conversar com seu amigo João">
+                <div class="friend-avatar-wrap">
+                  <span class="friend-emoji">👨🏻‍💼</span>
+                  <span class="friend-status-dot"></span>
+                </div>
+                <div class="item-details">
+                  <span class="item-name">João</span>
+                  <span class="item-sub">Seu Amigo de Confiança</span>
+                </div>
+                <span class="active-indicator-tag">Ativo</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- Rodapé da Barra Lateral: Ajustes e Saída Rápida -->
+      <div class="sidebar-footer">
+        <!-- Alternar Modo Noturno -->
+        <button class="sidebar-footer-btn" id="toggleContrastBtn" title="Alternar Modo Conforto Noturno">
           <span class="icon">🌙</span>
+          <span class="label">Conforto Visual</span>
         </button>
 
-        <!-- Botão de Saída Rápida de Emergência -->
-        <button id="quickExitBtn" class="btn-quick-exit" title="Sair imediatamente da página (Tecla ESC)">
+        <!-- Alternar Modo Totem Urbano -->
+        <button class="sidebar-footer-btn" id="toggleTotemBtn" title="Modo Totem Urbano de Ponto de Ônibus">
+          <span class="icon">🚏</span>
+          <span class="label">Modo Totem</span>
+        </button>
+
+        <!-- Botão de Saída Rápida (ESC) -->
+        <button class="btn-quick-exit-sidebar" id="quickExitBtn" title="Sair imediatamente da página (Tecla ESC)">
           <span class="icon">⚡</span>
-          <span class="text-exit">SAÍDA RÁPIDA</span>
+          <span class="text">SAÍDA RÁPIDA</span>
           <kbd class="kbd-esc">ESC</kbd>
         </button>
       </div>
-    </div>
-  </aside>
 
-  <!-- CONTAINER PRINCIPAL DO CHAT -->
-  <div class="totem-frame-wrapper" id="totemWrapper">
-    
-    <!-- CABEÇALHO DO TOTEM (Visível no Modo Totem Urbano) -->
-    <header class="totem-header" id="totemHeader" style="display: none;">
-      <div class="totem-badge">
-        <span class="totem-icon">📍</span>
-        <div>
-          <span class="totem-title">PONTO SEGURO URBANO • APOIO CONTRA A VIOLÊNCIA SEXUAL</span>
-          <span class="totem-subtitle" id="totemLocationSubtitle">Terminal Integrado com Rastreamento GPS e Despacho de Urgência 24h</span>
-        </div>
-      </div>
-      <div class="totem-clock" id="totemClock">12:00</div>
-    </header>
+    </aside>
 
-    <!-- TELA PRINCIPAL: CHAT COM A PLANTONISTA ESPECIALIZADA -->
-    <main class="chat-main-container">
-      <div class="chat-card">
-        
-        <!-- Topo da Atendente Especializada -->
-        <header class="chat-header">
-          <div class="assistant-profile">
-            <div class="assistant-avatar human-avatar">
-              <span>👩🏻‍💼</span>
-              <span class="online-indicator"></span>
-            </div>
-            <div class="assistant-info">
-              <h1 class="assistant-name">Clara • Plantonista Especializada em Apoio a Vítimas de Abuso</h1>
-              <p class="assistant-status">
-                <span class="live-tag">● AO VIVO</span> Acolhimento Humanizado 24h • Cuidados Médicos e Proteção
+    <!-- ====================================================================
+         ÁREA PRINCIPAL DO CHAT (ESTILO CHATGPT CENTRALIZADO)
+         ==================================================================== -->
+    <main class="chatgpt-main-viewport">
+      
+      <!-- Topbar do Chat: Menu Hambúrguer, Amigo Ativo e Canais de Voz/Vídeo -->
+      <header class="chat-top-header">
+        <div class="top-header-left">
+          <button class="btn-hamburger" id="openSidebarBtn" onclick="toggleSidebar()" title="Abrir menu de emergência e amigos">
+            <span>☰</span>
+          </button>
+          
+          <div class="current-friend-display">
+            <div class="friend-avatar-mini" id="topAvatarMini">👩🏻‍💼</div>
+            <div>
+              <h1 class="current-friend-name" id="topFriendName">Maria • Sua Amiga de Confiança</h1>
+              <p class="current-friend-status">
+                <span class="live-dot-green"></span>
+                <span id="topFriendSubtitle">Online na Rede de Apoio • Pronta para chamar a Polícia (190)</span>
               </p>
             </div>
           </div>
-
-          <div class="chat-header-actions">
-            <!-- Botão de Limpar Conversa -->
-            <button id="clearChatBtn" class="btn-header-action" title="Limpar conversa para privacidade">
-              🗑️ Limpar Conversa
-            </button>
-          </div>
-        </header>
-
-        <!-- Área de Conversa -->
-        <div class="chat-messages" id="chatMessages" role="log" aria-live="polite">
-          <!-- Mensagem Inicial com Foco Explícito em Abuso Sexual -->
-          <div class="chat-msg msg-ai">
-            <div class="msg-bubble">
-              <p>Olá, meu nome é <strong>Clara</strong>. Sou a plantonista especializada em acolhimento e suporte a vítimas de abuso e violência sexual nesta central.</p>
-              <p>Quero que você respire bem fundo e guarde isso com você: <strong>você está em um local seguro agora e você NÃO tem culpa de nada do que aconteceu</strong>. A responsabilidade é única e exclusiva de quem cometeu a violência.</p>
-              <p>Estou conectada em tempo real para te ajudar: <strong>posso enviar a polícia se você estiver em perigo, acionar o SAMU se estiver ferida, te orientar sobre medicamentos profiláticos urgentes (que devem ser tomados em até 72h no hospital) ou apenas te ouvir e acolher</strong>.</p>
-              <p>Me diga o que você está sentindo ou toque em uma das opções abaixo:</p>
-            </div>
-            <span class="msg-time">Agora</span>
-          </div>
         </div>
 
-        <!-- Botões de Acesso Rápido com Foco em Abuso Sexual -->
-        <div class="chat-quick-replies" id="quickReplies">
-          <button class="quick-chip chip-sos" onclick="sendQuickMessage('Sofri um abuso sexual agora e estou em perigo!')">
-            🚨 Sofri um abuso agora, socorro!
+        <div class="top-header-right">
+          <!-- Botão Fazer Ligação de Voz -->
+          <button class="btn-call-mode" id="topCallBtn" onclick="handleTopCallClick()" title="Fazer ligação">
+            <span class="icon" id="topCallIcon">📞</span>
+            <span class="btn-label" id="topCallLabel">Ligar por Voz</span>
           </button>
-          <button class="quick-chip chip-sos" onclick="sendQuickMessage('Estou ferida e machucada após a violência')">
-            🏥 Estou ferida / preciso de médico
+
+          <!-- Botão Vídeo Chamada -->
+          <button class="btn-call-mode btn-video-mode" onclick="openVideoCallModal()" title="Iniciar vídeo chamada acolhedora">
+            <span class="icon">📹</span>
+            <span class="btn-label">Vídeo Chamada</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- ÁREA DE MENSAGENS DO CHAT (ROLÁVEL ESTILO CHATGPT) -->
+      <div class="chatgpt-messages-container" id="chatMessages" role="log" aria-live="polite">
+        <!-- Mensagem de Boas-Vindas Inserida pelo JavaScript -->
+      </div>
+
+      <!-- ÁREA INFERIOR FIXA: CHIPS RÁPIDOS E CAMPO DE ENTRADA -->
+      <div class="chatgpt-input-wrapper">
+        
+        <!-- Chips Rápidos Especializados (Foco em Abuso Sexual & Envio de Localização) -->
+        <div class="chat-quick-chips" id="quickChipsBar">
+          <!-- BOTÃO EM DESTAQUE DE ENVIO DE LOCALIZAÇÃO AO AMIGO -->
+          <button class="quick-chip chip-sos btn-loc-highlight" onclick="sendLocationToFriend()" title="Manda sua localização para seu amigo acionar a polícia agora">
+            📍 Mandar minha localização para meu amigo chamar a polícia!
+          </button>
+          <button class="quick-chip chip-sos" onclick="sendQuickMessage('Fui abusada agora e estou em perigo!')">
+            🚨 Fui abusada agora, socorro!
           </button>
           <button class="quick-chip" onclick="sendQuickMessage('O que preciso tomar nas primeiras 72 horas? (PEP / Gravidez)')">
             ⏱️ Remédios nas primeiras 72h (PEP)
           </button>
-          <button class="quick-chip" onclick="sendQuickMessage('Acho que fui dopada (boa noite Cinderela / bebida batizada)')">
-            🧪 Acho que fui dopada (bebida)
-          </button>
-          <button class="quick-chip" onclick="sendQuickMessage('Tenho muito medo de denunciar o agressor')">
-            🛡️ Tenho medo de denunciar
+          <button class="quick-chip" onclick="sendQuickMessage('Acho que colocaram algo na minha bebida (fui dopada)')">
+            🧪 Acho que colocaram algo na bebida
           </button>
           <button class="quick-chip" onclick="sendQuickMessage('Estou em choque e tendo uma crise de pânico')">
             😰 Estou em choque / crise de pânico
           </button>
-          <button class="quick-chip" onclick="sendQuickMessage('Quais cuidados ter com exame de perícia e IML?')">
-            🔍 Exames periciais e cuidados
+          <button class="quick-chip" onclick="sendQuickMessage('Tenho medo de denunciar o agressor')">
+            🛡️ Tenho medo de denunciar
           </button>
         </div>
 
-        <!-- Barra de Entrada de Mensagem -->
-        <form class="chat-input-bar" id="chatForm" onsubmit="handleSendMessage(event)">
+        <!-- Formulário de Envio Estilo ChatGPT -->
+        <form class="chatgpt-input-box" id="chatForm" onsubmit="handleSendMessage(event)">
+          <!-- Botão de Atalho Rápido de Localização dentro do input -->
+          <button type="button" class="btn-input-loc" onclick="sendLocationToFriend()" title="Compartilhar localização GPS com seu amigo">
+            📍
+          </button>
+          
           <input 
             type="text" 
             id="chatInput" 
-            placeholder="Pode desabafar ou pedir socorro, este canal é 100% sigiloso..." 
+            placeholder="Pode desabafar ou pedir socorro, seu amigo(a) está ouvindo..." 
             autocomplete="off"
-            aria-label="Mensagem para a plantonista"
+            aria-label="Mensagem para o amigo"
             autofocus
           >
-          <button type="submit" class="btn-send-msg" id="sendBtn" title="Enviar mensagem">
-            <span>Enviar</span>
-            <span class="send-icon">➤</span>
+          
+          <button type="submit" class="btn-send-message" id="sendBtn" title="Enviar mensagem">
+            <span>➤</span>
           </button>
         </form>
 
+        <p class="chatgpt-disclaimer">
+          🔒 Canal sigiloso de emergência com IA Gemini blindada • Seus dados e localização não são armazenados.
+        </p>
       </div>
+
     </main>
 
+  </div>
+
+  <!-- ====================================================================
+       MODAL: LIGAÇÃO DE VOZ SIMULADA COM ÁUDIO FALADO
+       ==================================================================== -->
+  <div class="call-modal-overlay" id="voiceCallModal" style="display: none;">
+    <div class="call-modal-card">
+      <div class="call-top-bar">
+        <span class="call-encryption-badge">🔒 Ligação Segura de Amigo</span>
+        <span class="call-timer" id="callDurationTimer">00:00</span>
+      </div>
+
+      <div class="call-avatar-stage">
+        <div class="sound-wave-rings" id="soundWaveAnimation">
+          <div class="ring ring-1"></div>
+          <div class="ring ring-2"></div>
+          <div class="ring ring-3"></div>
+        </div>
+        <div class="call-avatar-circle" id="callAvatarCircle">
+          <span id="callAvatarEmoji">👩🏻‍💼</span>
+        </div>
+        <h2 class="call-persona-name" id="callPersonaName">Maria</h2>
+        <p class="call-persona-subtitle" id="callPersonaSubtitle">Sua Amiga de Confiança</p>
+        <div class="call-state-pill">
+          <span class="pulse-dot"></span>
+          <span>Na Linha com Você • Te Ouvindo</span>
+        </div>
+      </div>
+
+      <div class="call-transcript-box">
+        <div class="transcript-header">
+          <span>🎙️ Áudio da Chamada</span>
+          <button class="btn-speak-now" onclick="speakCurrentCounselorLine()">
+            🔊 Ouvir Fala
+          </button>
+        </div>
+        <p class="transcript-text" id="callTranscriptText">
+          "Estou aqui com você na linha! Me diz onde você está ou aperta no botão de mandar localização que eu chamo a polícia agora!"
+        </p>
+      </div>
+
+      <!-- Ações rápidas na chamada -->
+      <div class="call-quick-prompts">
+        <button class="call-prompt-btn" onclick="sendLocationToFriend(); closeVoiceCallModal();">
+          📍 Mandar Meu Local e Chamar Polícia
+        </button>
+        <button class="call-prompt-btn" onclick="counselorSpeakTopic('calma')">
+          🌿 "Me acalma, por favor"
+        </button>
+        <button class="call-prompt-btn" onclick="counselorSpeakTopic('pep')">
+          ⏱️ "O que tomar no hospital (PEP)?"
+        </button>
+      </div>
+
+      <div class="call-controls-bar">
+        <button class="call-action-btn" id="btnCallMute" onclick="toggleCallMute()" title="Mutar microfone">
+          <span class="action-icon" id="callMuteIcon">🎙️</span>
+          <span class="action-label" id="callMuteLabel">Mudo</span>
+        </button>
+
+        <button class="call-action-btn btn-end-call" onclick="closeVoiceCallModal()" title="Desligar chamada">
+          <span class="action-icon">📵</span>
+          <span class="action-label">Desligar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL: VÍDEO CHAMADA SIMULADA
+       ==================================================================== -->
+  <div class="call-modal-overlay" id="videoCallModal" style="display: none;">
+    <div class="video-modal-card">
+      <div class="video-main-feed">
+        <div class="video-counselor-background">
+          <div class="video-counselor-avatar" id="videoCounselorAvatar">
+            <span id="videoAvatarEmoji">👩🏻‍💼</span>
+          </div>
+          <div class="video-presence-aura"></div>
+        </div>
+
+        <div class="video-top-overlay">
+          <div class="video-info-badge">
+            <span class="live-dot-red"></span>
+            <span id="videoCounselorName">Maria</span> • Chamada de Vídeo de Apoio
+          </div>
+          <div class="video-timer" id="videoDurationTimer">00:00</div>
+        </div>
+
+        <div class="video-subtitles-bar">
+          <span class="subtitles-icon">💬</span>
+          <p class="subtitles-content" id="videoSubtitleContent">
+            "Oi amiga, que alívio te ver. Respire no seu tempo, estou com você e não vou soltar sua mão."
+          </p>
+        </div>
+
+        <!-- PiP WebCam Usuário -->
+        <div class="video-pip-self">
+          <div class="pip-placeholder" id="pipPlaceholder">
+            <span class="pip-icon">👤</span>
+            <span class="pip-text">Você (Privado)</span>
+          </div>
+          <video id="userSelfWebcam" autoplay playsinline muted style="display: none;"></video>
+        </div>
+      </div>
+
+      <div class="video-controls-bar">
+        <button class="video-control-btn" id="btnVideoMic" onclick="toggleVideoMic()">
+          <span class="ctrl-icon" id="videoMicIcon">🎙️</span>
+          <span class="ctrl-label" id="videoMicLabel">Mic Ativo</span>
+        </button>
+
+        <button class="video-control-btn" id="btnVideoCam" onclick="toggleUserWebcam()">
+          <span class="ctrl-icon" id="videoCamIcon">📷</span>
+          <span class="ctrl-label" id="videoCamLabel">Minha Câmera</span>
+        </button>
+
+        <button class="video-control-btn" onclick="speakCurrentCounselorLine()">
+          <span class="ctrl-icon">🔊</span>
+          <span class="ctrl-label">Ouvir Voz</span>
+        </button>
+
+        <button class="video-control-btn btn-end-video" onclick="closeVideoCallModal()">
+          <span class="ctrl-icon">📵</span>
+          <span class="ctrl-label">Encerrar</span>
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- TOAST DE NOTIFICAÇÃO -->
