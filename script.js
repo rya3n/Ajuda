@@ -1435,6 +1435,7 @@ const CallSpeechManager = {
   lastRecognizedText: "",
   lastProcessedSpeech: "",
   lastProcessedTimestamp: 0,
+  audioStream: null, // Stream contínuo do microfone para manter a permissão do navegador ativa
 
   init() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1451,11 +1452,14 @@ const CallSpeechManager = {
 
       this.recognition.onstart = () => {
         this.isListening = true;
-        updateCallUIListeningState(true);
+        if (!this.isSpeaking) {
+          updateCallUIListeningState(true);
+        }
       };
 
       this.recognition.onresult = (event) => {
-        if (this.isSpeaking) return;
+        // Se a IA está falando ou se o usuário mutou o microfone, ignora o áudio
+        if (this.isSpeaking || appState.isMuted) return;
 
         let interimTranscript = '';
         let finalTranscript = '';
@@ -1504,7 +1508,8 @@ const CallSpeechManager = {
 
       this.recognition.onend = () => {
         this.isListening = false;
-        if (this.isCalling && !appState.isMuted && !this.isSpeaking) {
+        // Se a chamada ainda estiver ativa e não mutada, reinicia sem quebrar a sessão
+        if (this.isCalling && !appState.isMuted) {
           try {
             this.recognition.start();
           } catch (e) {}
@@ -1520,10 +1525,22 @@ const CallSpeechManager = {
     }
   },
 
-  start(modalType) {
+  async start(modalType) {
     this.isCalling = true;
     this.activeModalType = modalType;
     this.isSpeaking = false;
+
+    // 1. Manter stream de microfone ativo em segundo plano durante toda a chamada.
+    // Isso garante que o navegador (Chrome/Edge) peça permissão apenas UMA vez no início da ligação!
+    try {
+      if (!this.audioStream && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        this.audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+    } catch (err) {
+      console.warn("Permissão de áudio via getUserMedia não obtida ou cancelada:", err);
+    }
+
+    // 2. Iniciar o reconhecimento de fala contínuo
     if (!this.recognition) this.init();
     if (this.recognition && !appState.isMuted) {
       try {
@@ -1533,18 +1550,19 @@ const CallSpeechManager = {
   },
 
   pause() {
-    if (this.recognition) {
-      try {
-        this.recognition.stop();
-      } catch (e) {}
-    }
+    // IMPORTANTE: NÃO chamar this.recognition.stop() aqui!
+    // Parar o recognition encerrava a sessão de gravação, fazendo o Chrome/Edge pedir permissão toda vez que a IA respondia.
+    // Apenas marcamos que o sistema está falando e não captando neste momento.
     this.isListening = false;
     updateCallUIListeningState(false);
   },
 
   resume() {
-    if (this.isCalling && !appState.isMuted && !this.isSpeaking) {
-      if (!this.recognition) this.init();
+    this.isSpeaking = false;
+    if (this.isCalling && !appState.isMuted) {
+      this.isListening = true;
+      updateCallUIListeningState(true);
+      // Se por inatividade o navegador encerrou o recognition, religa suavemente
       if (this.recognition) {
         try {
           this.recognition.start();
@@ -1558,11 +1576,22 @@ const CallSpeechManager = {
     this.isSpeaking = false;
     this.activeModalType = null;
     clearTimeout(this.userSpeechTimeout);
+
+    // Parar o reconhecimento somente no término REAL da ligação (quando clica em desligar)
     if (this.recognition) {
       try {
         this.recognition.stop();
       } catch (e) {}
     }
+
+    // Liberar o hardware do microfone
+    if (this.audioStream) {
+      try {
+        this.audioStream.getTracks().forEach(track => track.stop());
+      } catch (e) {}
+      this.audioStream = null;
+    }
+
     this.isListening = false;
     updateCallUIListeningState(false);
   }
@@ -2067,11 +2096,17 @@ function toggleCallMute() {
   if (appState.isMuted) {
     if (icon) icon.innerText = '🔇';
     if (label) label.innerText = 'Mic Mudo';
+    if (CallSpeechManager.audioStream) {
+      CallSpeechManager.audioStream.getAudioTracks().forEach(t => t.enabled = false);
+    }
     CallSpeechManager.pause();
     showToast("Seu microfone está mutado.");
   } else {
     if (icon) icon.innerText = '🎙️';
     if (label) label.innerText = 'Mic Ativo';
+    if (CallSpeechManager.audioStream) {
+      CallSpeechManager.audioStream.getAudioTracks().forEach(t => t.enabled = true);
+    }
     CallSpeechManager.resume();
     showToast("Seu microfone está ativo e te ouvindo.");
   }
@@ -2146,11 +2181,17 @@ function toggleVideoMic() {
   if (appState.isMuted) {
     if (icon) icon.innerText = '🔇';
     if (label) label.innerText = 'Mic Mudo';
+    if (CallSpeechManager.audioStream) {
+      CallSpeechManager.audioStream.getAudioTracks().forEach(t => t.enabled = false);
+    }
     CallSpeechManager.pause();
     showToast("Microfone mutado.");
   } else {
     if (icon) icon.innerText = '🎙️';
     if (label) label.innerText = 'Mic Ativo';
+    if (CallSpeechManager.audioStream) {
+      CallSpeechManager.audioStream.getAudioTracks().forEach(t => t.enabled = true);
+    }
     CallSpeechManager.resume();
     showToast("Microfone reativado e te ouvindo.");
   }
