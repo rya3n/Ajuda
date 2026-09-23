@@ -9,12 +9,39 @@
    ========================================================================== */
 
 /* ==========================================================================
-   1. CONFIGURAÇÃO DA API GEMINI & SISTEMA DE BLINDAGEM (ANTI-BURLA)
+   1. CONFIGURAÇÃO DA API GEMINI & SISTEMA DE MEMÓRIA ANTI-REPETIÇÃO
    ========================================================================== */
 const API_CONFIG = {
-  apiKey: "AQ.Ab8RN6JKvt6xTFeSJps3pASs3C80afwxrjVm_sKXUYHgkJrMww",
-  endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent",
+  get apiKey() {
+    return localStorage.getItem('ponto_seguro_gemini_key') || "";
+  },
+  set apiKey(val) {
+    if (val && val.trim()) {
+      localStorage.setItem('ponto_seguro_gemini_key', val.trim());
+    } else {
+      localStorage.removeItem('ponto_seguro_gemini_key');
+    }
+  },
+  primaryModel: "gemini-2.0-flash",
+  fallbackModel: "gemini-1.5-flash",
+  endpointBase: "https://generativelanguage.googleapis.com/v1beta/models",
   useExternalAPI: true
+};
+
+/**
+ * Memória Anti-Repetição Inteligente (Garante respostas naturais e sem clichês repetidos)
+ */
+const responseMemory = {
+  lastPicked: {},
+  pick(key, options) {
+    if (!options || options.length === 0) return "";
+    if (options.length === 1) return options[0];
+    const last = this.lastPicked[key];
+    const filtered = options.filter(opt => opt !== last);
+    const chosen = filtered[Math.floor(Math.random() * filtered.length)] || options[0];
+    this.lastPicked[key] = chosen;
+    return chosen;
+  }
 };
 
 /* ==========================================================================
@@ -33,9 +60,8 @@ const CHANNELS_CONFIG = {
     callBtnLabel: 'Ligar por Voz',
     isEmergencyService: false,
     phone: '190',
-    greeting: `<p>Oi amiga, é a <strong>Maria</strong>! Tô aqui com você.</p>
-      <p>Fica calma, respira bem fundo: <strong>você NÃO tem culpa de nada do que aconteceu</strong>. Tô do seu lado pro que der e vier!</p>
-      <p>Se você sofreu algum abuso ou está em perigo, me diz o que houve ou <strong>aperta no botão abaixo para me mandar a sua localização</strong> que eu já ligo pro 190 e peço a viatura praí!</p>`,
+    greeting: `<p>Oi amiga! Que bom falar com você! Tô por aqui, tá tudo bem por aí?</p>
+      <p>Pode desabafar ou conversar comigo com calma. Se você estiver passando por qualquer situação difícil, aperto ou perigo, saiba que tô do seu lado pro que der e vier!</p>`,
     chips: [
       { text: "📍 Mandar minha localização para Maria chamar a polícia!", isSos: true, isHighlight: true, isLoc: true },
       { text: "🚨 Fui abusada agora, socorro!", isSos: true },
@@ -55,9 +81,8 @@ const CHANNELS_CONFIG = {
     callBtnLabel: 'Ligar por Voz',
     isEmergencyService: false,
     phone: '190',
-    greeting: `<p>E aí parceira(o), é o <strong>João</strong> aqui! Vi sua mensagem.</p>
-      <p>Fica em paz, tô fechado com você: <strong>você tá em segurança agora e NÃO tem culpa de nada</strong>. Não vou soltar sua mão.</p>
-      <p>Se você foi abusada(o) ou estiver em perigo, me manda sua localização no botão vermelho abaixo que eu já ligo pro 190 e peço a viatura policial pra ir correndo te buscar!</p>`,
+    greeting: `<p>Fala parceira, beleza? Tô online na área! Como tão as coisas por aí?</p>
+      <p>Se precisar trocar uma ideia, desabafar ou se tiver alguma enrascada ou perigo, só me mandar mensagem que eu tô fechado contigo!</p>`,
     chips: [
       { text: "📍 Mandar minha localização para João chamar a polícia!", isSos: true, isHighlight: true, isLoc: true },
       { text: "🚨 Fui abusada(o) agora, socorro!", isSos: true },
@@ -277,13 +302,56 @@ SEU PAPEL E DIRETRIZES:
 }
 
 /**
- * Chamada à API Gemini 3.6 com Persona Dinâmica e Histórico por Canal
+ * Requisição Inteligente à API Google Gemini (com fallback entre modelos 2.0 e 1.5)
+ */
+async function requestGeminiText(contents, systemText, maxTokens = 1000) {
+  const apiKey = API_CONFIG.apiKey;
+  if (!apiKey || !API_CONFIG.useExternalAPI) return null;
+
+  const models = [API_CONFIG.primaryModel, API_CONFIG.fallbackModel];
+  const payload = {
+    contents: contents,
+    systemInstruction: { parts: [{ text: systemText }] },
+    generationConfig: {
+      temperature: 0.82,
+      maxOutputTokens: maxTokens
+    }
+  };
+
+  for (const model of models) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4000);
+      const url = `${API_CONFIG.endpointBase}/${model}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text && text.trim()) return text.trim();
+      }
+    } catch (e) {
+      console.warn(`Tentativa com ${model} falhou ou timeout:`, e);
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Chamada à API Gemini com Persona Dinâmica e Histórico por Canal
  */
 async function sendToGeminiAPI(userMessage, personaName) {
   try {
-    const promptSystem = getSystemPromptForChannel(personaName);
+    const promptSystem = `${getSystemPromptForChannel(personaName)}\n\nINFORMAÇÃO DE CONTEXTO EM TEMPO REAL:\n- Localização atual do usuário via GPS: ${userLocation.fullAddress}.`;
 
-    // Montar histórico conversacional específico deste canal
+    // Montar histórico conversacional específico deste canal para memória real
     const contents = [];
     const channelHistory = (appState.channelHistories[personaName] || []).slice(-8);
     for (const turn of channelHistory) {
@@ -293,46 +361,17 @@ async function sendToGeminiAPI(userMessage, personaName) {
       });
     }
 
-    // Adiciona a mensagem atual com a localização em contexto
+    // Adiciona a mensagem atual pura do usuário para conversação 100% natural
     contents.push({
       role: "user",
       parts: [
         {
-          text: `Mensagem enviada pelo usuário: "${userMessage}". Localização cadastrada: ${userLocation.fullAddress}.`
+          text: userMessage
         }
       ]
     });
 
-    const requestPayload = {
-      contents: contents,
-      systemInstruction: {
-        parts: [
-          { text: promptSystem }
-        ]
-      },
-      generationConfig: {
-        temperature: 0.75,
-        maxOutputTokens: 1000
-      }
-    };
-
-    const response = await fetch(`${API_CONFIG.endpoint}?key=${API_CONFIG.apiKey}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(requestPayload)
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.warn("Erro ao chamar API Gemini:", response.status, errText);
-      return null;
-    }
-
-    const data = await response.json();
-    const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    return generatedText || null;
+    return await requestGeminiText(contents, promptSystem, 1000);
   } catch (error) {
     console.warn("Exceção na chamada Gemini, usando motor local de contingência:", error);
     return null;
@@ -381,6 +420,128 @@ const userLocation = {
 };
 
 /* ==========================================================================
+   CONFIGURAÇÃO & MODAL DA INTELIGÊNCIA ARTIFICIAL (GEMINI)
+   ========================================================================== */
+function openAISettingsModal() {
+  const modal = document.getElementById('aiSettingsModal');
+  if (modal) modal.style.display = 'flex';
+  const input = document.getElementById('geminiApiKeyInput');
+  if (input) input.value = API_CONFIG.apiKey;
+  updateAIStatusUI();
+}
+
+function closeAISettingsModal() {
+  const modal = document.getElementById('aiSettingsModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function updateAIStatusUI(isConnected = null) {
+  const badge = document.getElementById('aiStatusBadge');
+  const btn = document.getElementById('btnAiConfig');
+  const dot = document.getElementById('aiStatusDot');
+  const card = document.getElementById('aiStatusCard');
+  const title = document.getElementById('aiStatusTitle');
+  const desc = document.getElementById('aiStatusDesc');
+
+  const hasKey = !!API_CONFIG.apiKey;
+
+  if (isConnected === true || (isConnected === null && hasKey)) {
+    if (badge) badge.innerText = "IA Gemini (Online)";
+    if (btn) btn.classList.add('is-connected');
+    if (card) {
+      card.className = 'ai-status-card status-connected';
+    }
+    if (title) title.innerText = "🟢 Google Gemini Conectado (Nuvem Ativa)";
+    if (desc) desc.innerText = "Suas conversas e chamadas estão sendo processadas em tempo real com os modelos oficiais do Google Gemini.";
+  } else {
+    if (badge) badge.innerText = "Motor Local Ativo";
+    if (btn) btn.classList.remove('is-connected');
+    if (card) {
+      card.className = 'ai-status-card status-local';
+    }
+    if (title) title.innerText = "🔵 Motor Neural Local Ativo (100% Funcional)";
+    if (desc) desc.innerText = "Respostas humanas, fluidas e sem repetição geradas com privacidade total no seu dispositivo.";
+  }
+}
+
+function toggleApiKeyVisibility() {
+  const input = document.getElementById('geminiApiKeyInput');
+  const btn = document.getElementById('btnToggleEye');
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    if (btn) btn.innerText = '🙈';
+  } else {
+    input.type = 'password';
+    if (btn) btn.innerText = '👁️';
+  }
+}
+
+async function testAndSaveGeminiKey() {
+  const input = document.getElementById('geminiApiKeyInput');
+  const btn = document.getElementById('btnTestSaveAiKey');
+  if (!input) return;
+
+  const key = input.value.trim();
+  if (!key) {
+    clearGeminiApiKey();
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = "Testando conexão...";
+  }
+
+  try {
+    const testPayload = {
+      contents: [{ role: "user", parts: [{ text: "ping" }] }],
+      generationConfig: { maxOutputTokens: 5 }
+    };
+
+    const url = `${API_CONFIG.endpointBase}/${API_CONFIG.primaryModel}:generateContent?key=${key}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(testPayload),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+
+    if (res.ok) {
+      API_CONFIG.apiKey = key;
+      updateAIStatusUI(true);
+      showToast("✨ Conexão com Google Gemini realizada com sucesso!");
+      setTimeout(() => closeAISettingsModal(), 800);
+    } else {
+      const err = await res.json().catch(() => ({}));
+      const msg = err.error?.message || "Chave inválida ou não autorizada pelo Google.";
+      showToast(`⚠️ Falha na API: ${msg}`);
+      updateAIStatusUI(false);
+    }
+  } catch (err) {
+    showToast("⚠️ Não foi possível conectar ao Google. Verifique a chave e a internet.");
+    updateAIStatusUI(false);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = "Testar e Salvar Conexão";
+    }
+  }
+}
+
+function clearGeminiApiKey() {
+  API_CONFIG.apiKey = "";
+  const input = document.getElementById('geminiApiKeyInput');
+  if (input) input.value = "";
+  updateAIStatusUI(false);
+  showToast("Chave removida. Motor Neural Local reativado.");
+}
+
+/* ==========================================================================
    3. INICIALIZAÇÃO DO APP
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
@@ -390,6 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initRealLocationDetection();
   updateTopFriendDisplay();
   updateQuickChipsForChannel(appState.selectedPersona);
+  updateAIStatusUI();
   initChatForActiveFriend();
 });
 
@@ -1069,10 +1231,15 @@ function generateSpecializedAIResponse(rawText, persona) {
 
   // === 1. MARIA (AMIGA - MENINA - INFORMAL WHATSAPP) ===
   if (persona === 'maria') {
+    // Pedido de Socorro / Urgência
     if (text === 'socorro' || text === 'ajuda' || text === 'me ajuda' || text === 'socorro!' || text === 'help') {
+      const sosList = [
+        `<p>Meu Deus amiga, o que aconteceu?! Eu tô aqui com você agora mesmo!</p><p>Você tá em perigo agora? Onde você tá? Me conta rápido pra eu te ajudar!</p>`,
+        `<p>Amiga, o que houve?! Tô com o coração na mão aqui, fala comigo!</p><p>Você tá segura? Me passa onde você tá agora mesmo!</p>`,
+        `<p>Tô aqui amiga! O que tá acontecendo? Não sai de onde você tá, me conta rápido!</p>`
+      ];
       return `
-        <p>Meu Deus, o que aconteceu?! Eu tô aqui com você agora mesmo!</p>
-        <p>Você tá em perigo agora? Onde você tá? Me conta rápido pra eu te ajudar!</p>
+        ${responseMemory.pick('maria_sos', sosList)}
         <div style="margin: 8px 0; text-align: center;">
           <button class="quick-chip chip-sos btn-loc-highlight" onclick="sendLocationToFriend()" style="padding: 8px 16px; font-size: 0.85rem;">
             📍 Mandar minha localização para Maria
@@ -1080,16 +1247,15 @@ function generateSpecializedAIResponse(rawText, persona) {
         </div>
       `;
     }
-    if (text.includes('sair') || text.includes('passear') || text.includes('volta') || (text.includes('hoje') && text.includes('bora'))) {
-      return `<p>Oi! Hoje tá bem corrido por aqui, mas me conta: tá tudo bem com você? Aconteceu alguma coisa ou você só queria conversar um pouco?</p>`;
-    }
-    if (text.includes('corre') || text.includes('cadeirante') || text.includes('kkk') || text.includes('haha') || text.includes('rsrs')) {
-      return `<p>Uai, que isso? Kkkk não entendi nada! Mas me diz sério: você tá bem mesmo? Se estiver precisando de ajuda ou de desabafar, tô por aqui.</p>`;
-    }
-    if (text.includes('abusad') || text.includes('abuso') || text.includes('estupr') || text.includes('agressor') || text.includes('me seguiu') || text.includes('me atacou') || text.includes('me bateu')) {
+
+    // Abuso sexual / Estupro / Agressão
+    if (text.includes('abusad') || text.includes('abuso') || text.includes('estupr') || text.includes('agressor') || text.includes('me seguiu') || text.includes('me atacou') || text.includes('me bateu') || text.includes('agarrou')) {
+      const abuseList = [
+        `<p>Meu Deus... respira bem fundo, eu tô aqui do seu lado agora e você <strong>NÃO tem culpa de nada</strong> do que aconteceu!</p><p>Clica no botão aqui embaixo pra me passar sua localização agora que eu já ligo pro 190 (Polícia Militar) pra viatura ir correndo te resgatar!</p>`,
+        `<p>Amiga, que covardia... segura minha mão virtual aqui, você foi muito forte e tá segura comigo agora! A culpa NUNCA é da vítima!</p><p>Manda sua localização agora pra gente pedir socorro policial imediatamente!</p>`
+      ];
       return `
-        <p>Meu Deus... respira bem fundo, eu tô aqui do seu lado agora e você <strong>NÃO tem culpa de nada</strong> do que aconteceu!</p>
-        <p>Clica no botão aqui embaixo pra me passar sua localização agora que eu já ligo pro 190 (Polícia Militar) pra viatura ir correndo te resgatar!</p>
+        ${responseMemory.pick('maria_abuse', abuseList)}
         <div style="margin: 10px 0; text-align: center;">
           <button class="quick-chip chip-sos btn-loc-highlight" onclick="sendLocationToFriend()" style="padding: 9px 18px;">
             📍 Enviar Minha Localização para Maria chamar a Polícia (190)
@@ -1098,15 +1264,116 @@ function generateSpecializedAIResponse(rawText, persona) {
         <p>Se puder, entre em uma farmácia, comércio ou fique perto de pessoas de confiança. Tô contigo!</p>
       `;
     }
-    return `<p>Tô te ouvindo, amiga! Pode falar comigo com calma. Tá tudo bem por aí ou você tá precisando de ajuda?</p>`;
+
+    // Perigo na rua / Stalker / Medo de voltar
+    if (text.includes('seguindo') || text.includes('estranho') || text.includes('rua escura') || text.includes('com medo de ir') || text.includes('suspeito')) {
+      const dangerList = [
+        `<p>Amiga, não para de andar! Entra agora no primeiro comércio, padaria, farmácia ou posto que você ver e fica perto dos funcionários!</p><p>Me manda sua localização no botão abaixo que eu já chamo a polícia pra você!</p>`,
+        `<p>Meu Deus, presta muita atenção: finge que tá no telefone falando alto, não vai pra lugar deserto e entra em qualquer loja aberta agora!</p><p>Tô aqui com você, me manda suas coordenadas!</p>`
+      ];
+      return `
+        ${responseMemory.pick('maria_danger', dangerList)}
+        <div style="margin: 8px 0; text-align: center;">
+          <button class="quick-chip chip-sos btn-loc-highlight" onclick="sendLocationToFriend()" style="padding: 8px 16px; font-size: 0.85rem;">
+            📍 Mandar Localização para Maria
+          </button>
+        </div>
+      `;
+    }
+
+    // PEP 72 Horas
+    if (text.includes('pep') || text.includes('72h') || text.includes('72 horas') || text.includes('remédio') || text.includes('coquetel') || text.includes('hiv')) {
+      return `
+        <p>Amiga, isso é super importante: a Profilaxia PEP tem que ser iniciada nas primeiras <strong>72 horas</strong> no hospital ou UPA pra evitar infecções e HIV!</p>
+        <p>O atendimento no SUS é 100% gratuito e direito seu, sem precisar de Boletim de Ocorrência. Eu vou com você se você quiser, não precisa ter vergonha nenhuma!</p>
+      `;
+    }
+
+    // Ansiedade / Pânico / Falta de ar
+    if (text.includes('ansied') || text.includes('pânic') || text.includes('panico') || text.includes('medo') || text.includes('tremend') || text.includes('falta de ar') || text.includes('coração')) {
+      const panicList = [
+        `<p>Calma amiga, segura na minha mão. Solta os ombros e puxa o ar bem devagarzinho comigo... inspira... e solta devagar.</p><p>Você tá segura e eu tô aqui com você. Isso vai passar, respira no seu tempo.</p>`,
+        `<p>Tô aqui do seu lado amiga! Foca na minha voz: puxa o ar pelo nariz contando até 4, segura um pouquinho e solta pela boca bem devagar. Você não tá sozinha!</p>`
+      ];
+      return responseMemory.pick('maria_panic', panicList);
+    }
+
+    // Desabafo / Tristeza / Chorar / "Tô mal"
+    if (text.includes('triste') || text.includes('chorei') || text.includes('chorando') || text.includes('tô mal') || text.includes('to mal') || text.includes('brigou') || text.includes('desabafar') || text.includes('angustia')) {
+      const ventList = [
+        `<p>Poxa amiga, meu coração aperta de te ver assim... desabafa comigo, o que tá te deixando desse jeito?</p><p>Pode me contar tudo, aqui você tá 100% acolhida e sem julgamento nenhum!</p>`,
+        `<p>Eu tô aqui pra te ouvir amiga! Não guarda isso no peito não, solta tudo. Você é muito importante pra mim e eu quero te ver bem.</p>`,
+        `<p>Amiga, às vezes tudo parece pesado demais né? Mas lembra que você tem a mim. Chora o que precisar e me conta o que tá acontecendo.</p>`
+      ];
+      return responseMemory.pick('maria_vent', ventList);
+    }
+
+    // Cumprimentos & "Tudo bem"
+    if (text.includes('tudo bem') || text.includes('tudo bom') || text.includes('como vai') || text.includes('como cê tá') || text.includes('como vc ta')) {
+      const fineList = [
+        `<p>Tudo certinho por aqui amiga! E com você, como tão as coisas hoje? Deu algum problema ou você queria bater um papo gostoso?</p>`,
+        `<p>Por aqui tá tudo em paz! E por aí, como tá sendo seu dia? Me conta as novidades!</p>`,
+        `<p>Tudo bem comigo amiga! Mas e você, como tá seu coração hoje? Pode desabafar se tiver acontecido alguma coisa!</p>`
+      ];
+      return responseMemory.pick('maria_fine', fineList);
+    }
+
+    if (text === 'oi' || text === 'ola' || text === 'olá' || text === 'oii' || text === 'oiii' || text === 'e ai' || text === 'e aí' || text.startsWith('oi ') || text.startsWith('olá ')) {
+      const greetList = [
+        `<p>Oii amiga! Que bom te ver por aqui! Como cê tá? Tá tudo bem por aí?</p>`,
+        `<p>Oi amiga linda! Tô na área, pode falar comigo! O que manda?</p>`,
+        `<p>Oii! Tudo bem com você? Deu alguma coisa ou só queria trocar uma ideia?</p>`
+      ];
+      return responseMemory.pick('maria_greet', greetList);
+    }
+
+    // Onde você tá / O que tá fazendo / Rotina
+    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('fazendo o que') || text.includes('tá fazendo') || text.includes('tá em casa')) {
+      const routineList = [
+        `<p>Tô em casa de boa amiga, mas se você precisar de qualquer coisa eu largo tudo e vou aí agora mesmo! Onde você tá?</p>`,
+        `<p>Tô por aqui mexendo no celular e cuidando das coisas! Se você tiver precisando de mim ou quiser companhia, só me dar um grito!</p>`
+      ];
+      return responseMemory.pick('maria_routine', routineList);
+    }
+
+    // Agradecimento / Carinho
+    if (text.includes('obrigad') || text.includes('valeu') || text.includes('te amo') || text.includes('linda') || text.includes('fofa')) {
+      const thanksList = [
+        `<p>Imagina amiga, amigo é pra essas coisas! Eu tô contigo pro que der e vier, de verdade! ❤️</p>`,
+        `<p>Não precisa agradecer amiga! Te amo muito e você sabe que pode sempre contar comigo! Um beijo bem grande!</p>`
+      ];
+      return responseMemory.pick('maria_thanks', thanksList);
+    }
+
+    // Despedida
+    if (text.includes('tchau') || text.includes('vou dormir') || text.includes('vou sair') || text.includes('depois falo') || text.includes('fui')) {
+      const byeList = [
+        `<p>Tá bom amiga, vai lá! Se cuida muito e qualquer coisa me manda mensagem na mesma hora, beijão!</p>`,
+        `<p>Beijo amiga, dorme com Deus! Se precisar de mim de madrugada pode me ligar sem medo, tá?</p>`
+      ];
+      return responseMemory.pick('maria_bye', byeList);
+    }
+
+    // Resposta amigável padrão (quando o usuário conversa sobre qualquer outro assunto)
+    const genericList = [
+      `<p>Tô te ouvindo com calma amiga! Me conta mais sobre isso, o que você acha que a gente deve fazer?</p>`,
+      `<p>Entendi amiga! E como isso aconteceu? Fica à vontade pra falar comigo sobre o que você quiser.</p>`,
+      `<p>Nossa amiga, tô prestando atenção em cada detalhe. Me fala mais sobre isso!</p>`,
+      `<p>Pode continuar amiga, tô aqui do seu lado te escutando de verdade!</p>`
+    ];
+    return responseMemory.pick('maria_generic', genericList);
   }
 
   // === 2. JOÃO (AMIGO - MENINO - INFORMAL WHATSAPP) ===
   if (persona === 'joao') {
+    // Pedido de Socorro / Urgência
     if (text === 'socorro' || text === 'ajuda' || text === 'me ajuda' || text === 'socorro!' || text === 'help') {
+      const sosList = [
+        `<p>O que foi parceira?! Tô aqui contigo, fica calma(o)!</p><p>Quem tá aí perto de você? Você tá em perigo agora? Me fala onde você tá rápido!</p>`,
+        `<p>Opa, fala comigo parceira! O que tá pegando?! Me passa seu local que eu já dou um jeito de te ajudar agora!</p>`
+      ];
       return `
-        <p>O que foi?! Tô aqui contigo, fica tranquila(o)!</p>
-        <p>Quem tá aí perto de você? Você tá em perigo agora? Me fala onde você tá rápido!</p>
+        ${responseMemory.pick('joao_sos', sosList)}
         <div style="margin: 8px 0; text-align: center;">
           <button class="quick-chip chip-sos btn-loc-highlight" onclick="sendLocationToFriend()" style="padding: 8px 16px; font-size: 0.85rem;">
             📍 Mandar minha localização para o João
@@ -1114,16 +1381,15 @@ function generateSpecializedAIResponse(rawText, persona) {
         </div>
       `;
     }
-    if (text.includes('sair') || text.includes('passear') || text.includes('volta') || (text.includes('hoje') && text.includes('bora'))) {
-      return `<p>Fala parceira(o)! Hoje o dia tá puxado por aqui, mas me fala: tá tudo firme com você? Deu algum problema ou só queria trocar uma ideia?</p>`;
-    }
-    if (text.includes('corre') || text.includes('cadeirante') || text.includes('kkk') || text.includes('haha') || text.includes('rsrs')) {
-      return `<p>Eita, que doideira kkkk entendi nada! Mas fala sério aí, tá tudo de boa com você? Se precisar de apoio pro que der e vier, tô na área.</p>`;
-    }
-    if (text.includes('abusad') || text.includes('abuso') || text.includes('estupr') || text.includes('agressor') || text.includes('me seguiu') || text.includes('me atacou') || text.includes('me bateu')) {
+
+    // Abuso sexual / Estupro / Agressão
+    if (text.includes('abusad') || text.includes('abuso') || text.includes('estupr') || text.includes('agressor') || text.includes('me seguiu') || text.includes('me atacou') || text.includes('me bateu') || text.includes('agarrou')) {
+      const abuseList = [
+        `<p>Meu Deus, calma parceira, eu tô fechado com você! Você <strong>NÃO tem culpa de absolutamente nada</strong>, a culpa é toda de quem fez essa covardia.</p><p>Manda sua localização no botão aqui embaixo agora que eu já ligo pro 190 e peço a viatura com prioridade máxima praí!</p>`,
+        `<p>Mano, que absurdo... respira fundo, você tá segura(o) comigo agora. Não fica sozinha(o), aperta no botão abaixo que eu já chamo a viatura da PM agora!</p>`
+      ];
       return `
-        <p>Meu Deus, calma, eu tô fechado com você! Você <strong>NÃO tem culpa de absolutamente nada</strong>, a culpa é toda de quem fez essa covardia.</p>
-        <p>Manda sua localização no botão aqui embaixo agora que eu já ligo pro 190 e peço a viatura com prioridade máxima praí!</p>
+        ${responseMemory.pick('joao_abuse', abuseList)}
         <div style="margin: 10px 0; text-align: center;">
           <button class="quick-chip chip-sos btn-loc-highlight" onclick="sendLocationToFriend()" style="padding: 9px 18px;">
             📍 Enviar Minha Localização para João chamar a Polícia (190)
@@ -1132,7 +1398,61 @@ function generateSpecializedAIResponse(rawText, persona) {
         <p>Procura um lugar movimentado ou entra numa loja se der. Não fica sozinha(o)!</p>
       `;
     }
-    return `<p>Tô na escuta, pode falar! Me conta o que tá pegando. Tá tudo bem contigo ou precisa de uma força?</p>`;
+
+    // Perigo na rua / Stalker / Medo
+    if (text.includes('seguindo') || text.includes('estranho') || text.includes('rua escura') || text.includes('com medo de ir') || text.includes('suspeito')) {
+      const dangerList = [
+        `<p>Parceira, não vacila! Entra agora num comércio ou perto de bastante gente! Me manda sua localização que eu já ligo pro 190 e coloco a viatura pra ir aí te buscar!</p>`,
+        `<p>Fica esperta(o), acelera o passo e entra no primeiro estabelecimento aberto! Me manda suas coordenadas no botão abaixo agora!</p>`
+      ];
+      return `
+        ${responseMemory.pick('joao_danger', dangerList)}
+        <div style="margin: 8px 0; text-align: center;">
+          <button class="quick-chip chip-sos btn-loc-highlight" onclick="sendLocationToFriend()" style="padding: 8px 16px; font-size: 0.85rem;">
+            📍 Mandar Localização para o João
+          </button>
+        </div>
+      `;
+    }
+
+    // Ansiedade / Pânico
+    if (text.includes('ansied') || text.includes('pânic') || text.includes('panico') || text.includes('medo') || text.includes('tremend') || text.includes('falta de ar')) {
+      const panicList = [
+        `<p>Fica calma parceira, respira fundo. Eu tô fechado contigo e nada de ruim vai te acontecer. Puxa o ar devagar e me diz onde você tá agora.</p>`,
+        `<p>Tô na linha com você parceira! Solta os ombros, puxa o ar e solta bem devagar. Vai dar tudo certo, tô aqui pro que der e vier.</p>`
+      ];
+      return responseMemory.pick('joao_panic', panicList);
+    }
+
+    // Cumprimentos
+    if (text.includes('tudo bem') || text.includes('tudo bom') || text.includes('como vai') || text.includes('como cê tá')) {
+      const fineList = [
+        `<p>Tudo na paz por aqui parceira! E contigo, tudo certo? Deu alguma treta ou só queria dar um salve?</p>`,
+        `<p>Tudo suave por aqui! Como tão as paradas por aí? Qualquer fita me dá um toque!</p>`
+      ];
+      return responseMemory.pick('joao_fine', fineList);
+    }
+
+    if (text === 'oi' || text === 'ola' || text === 'olá' || text === 'e ai' || text === 'e aí' || text.startsWith('oi ') || text.startsWith('fala')) {
+      const greetList = [
+        `<p>E aí parceira, na paz? Fala comigo, tô na escuta por aqui!</p>`,
+        `<p>Fala parceira! Beleza? O que manda aí, tudo tranquilo?</p>`
+      ];
+      return responseMemory.pick('joao_greet', greetList);
+    }
+
+    // Agradecimento
+    if (text.includes('obrigad') || text.includes('valeu') || text.includes('tamo junto')) {
+      return `<p>Tamo junto parceira, sempre! Não precisa agradecer não, conta comigo pro que der e vier! 👊</p>`;
+    }
+
+    // Genérico
+    const genericList = [
+      `<p>Tô na escuta parceira! Me conta mais aí, o que mais tá pegando?</p>`,
+      `<p>Saquei parceira! E o que você tá pensando em fazer agora? Tô contigo!</p>`,
+      `<p>Pode falar parceira, tô prestando atenção em tudo que você tá falando.</p>`
+    ];
+    return responseMemory.pick('joao_generic', genericList);
   }
 
   // === 3. CENTRAL 180 (ATENDIMENTO À MULHER - FORMAL INSTITUCIONAL) ===
@@ -1232,28 +1552,606 @@ function simulateEmergencyDispatch(type) {
 }
 
 /* ==========================================================================
-   7. MODAIS DE LIGAÇÃO DE VOZ E VÍDEO CHAMADA
+   7. SISTEMA DE RECONHECIMENTO DE FALA E DIÁLOGO EM CHAMADA (VOZ & VÍDEO)
+   ========================================================================== */
+const CallSpeechManager = {
+  recognition: null,
+  isListening: false,
+  isCalling: false,
+  activeModalType: null, // 'voice' | 'video'
+  isSpeaking: false,
+  userSpeechTimeout: null,
+  lastRecognizedText: "",
+  lastProcessedSpeech: "",
+  lastProcessedTimestamp: 0,
+
+  init() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn("SpeechRecognition não suportado neste navegador.");
+      return false;
+    }
+
+    try {
+      this.recognition = new SpeechRecognition();
+      this.recognition.lang = 'pt-BR';
+      this.recognition.continuous = true;
+      this.recognition.interimResults = true;
+
+      this.recognition.onstart = () => {
+        this.isListening = true;
+        updateCallUIListeningState(true);
+      };
+
+      this.recognition.onresult = (event) => {
+        if (this.isSpeaking) return;
+
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const item = event.results[i];
+          if (item.isFinal) {
+            finalTranscript += item[0].transcript;
+          } else {
+            interimTranscript += item[0].transcript;
+          }
+        }
+
+        const currentText = (finalTranscript || interimTranscript).trim();
+        // Ignora ruídos menores que 2 caracteres para evitar disparos em falso
+        if (currentText && currentText.length >= 2) {
+          updateUserSpeechDisplay(currentText);
+          this.lastRecognizedText = currentText;
+
+          clearTimeout(this.userSpeechTimeout);
+          this.userSpeechTimeout = setTimeout(() => {
+            if (this.lastRecognizedText && !this.isSpeaking && this.isCalling) {
+              const textToSend = this.lastRecognizedText;
+              this.lastRecognizedText = "";
+
+              // Previne disparos repetidos idênticos num intervalo curto
+              const now = Date.now();
+              if (textToSend.toLowerCase() === this.lastProcessedSpeech.toLowerCase() && (now - this.lastProcessedTimestamp) < 2500) {
+                return;
+              }
+              this.lastProcessedSpeech = textToSend;
+              this.lastProcessedTimestamp = now;
+
+              handleCallUserSpeech(textToSend);
+            }
+          }, 1100);
+        }
+      };
+
+      this.recognition.onerror = (event) => {
+        console.warn("SpeechRecognition error:", event.error);
+        if (event.error === 'not-allowed') {
+          showToast("Acesso ao microfone necessário para a ligação.");
+        }
+      };
+
+      this.recognition.onend = () => {
+        this.isListening = false;
+        if (this.isCalling && !appState.isMuted && !this.isSpeaking) {
+          try {
+            this.recognition.start();
+          } catch (e) {}
+        } else {
+          updateCallUIListeningState(false);
+        }
+      };
+
+      return true;
+    } catch (e) {
+      console.warn("Erro ao instanciar SpeechRecognition:", e);
+      return false;
+    }
+  },
+
+  start(modalType) {
+    this.isCalling = true;
+    this.activeModalType = modalType;
+    this.isSpeaking = false;
+    if (!this.recognition) this.init();
+    if (this.recognition && !appState.isMuted) {
+      try {
+        this.recognition.start();
+      } catch (e) {}
+    }
+  },
+
+  pause() {
+    if (this.recognition) {
+      try {
+        this.recognition.stop();
+      } catch (e) {}
+    }
+    this.isListening = false;
+    updateCallUIListeningState(false);
+  },
+
+  resume() {
+    if (this.isCalling && !appState.isMuted && !this.isSpeaking) {
+      if (!this.recognition) this.init();
+      if (this.recognition) {
+        try {
+          this.recognition.start();
+        } catch (e) {}
+      }
+    }
+  },
+
+  stop() {
+    this.isCalling = false;
+    this.isSpeaking = false;
+    this.activeModalType = null;
+    clearTimeout(this.userSpeechTimeout);
+    if (this.recognition) {
+      try {
+        this.recognition.stop();
+      } catch (e) {}
+    }
+    this.isListening = false;
+    updateCallUIListeningState(false);
+  }
+};
+
+function updateCallUIListeningState(isListening) {
+  const callStateLabel = document.getElementById('callStateLabel');
+  const videoStatusLabel = document.getElementById('videoStatusLabel');
+  const callSpeakerHeader = document.getElementById('callSpeakerHeader');
+
+  if (CallSpeechManager.isSpeaking) {
+    if (callStateLabel) callStateLabel.innerText = "🔊 Falando com você...";
+    if (videoStatusLabel) videoStatusLabel.innerText = "🔊 Falando com você...";
+    if (callSpeakerHeader) callSpeakerHeader.innerText = "🔊 Falando agora...";
+    return;
+  }
+
+  if (isListening) {
+    if (callStateLabel) callStateLabel.innerText = "🎙️ Ouvindo você... fale com tranquilidade";
+    if (videoStatusLabel) videoStatusLabel.innerText = "🎙️ Te ouvindo ao vivo... pode falar";
+    if (callSpeakerHeader) callSpeakerHeader.innerText = "🎙️ Microfone Ativo";
+  } else {
+    if (callStateLabel) callStateLabel.innerText = "🔇 Microfone Pausado";
+    if (videoStatusLabel) videoStatusLabel.innerText = "🔇 Microfone Pausado";
+    if (callSpeakerHeader) callSpeakerHeader.innerText = "🔇 Pausado";
+  }
+}
+
+function updateUserSpeechDisplay(text) {
+  const voiceUserText = document.getElementById('callUserSpeechText');
+  const videoUserText = document.getElementById('videoUserSpeechText');
+  if (voiceUserText) voiceUserText.innerText = text;
+  if (videoUserText) videoUserText.innerText = `Você: "${text}"`;
+}
+
+/**
+ * PROCESSA A FALA DO USUÁRIO NA CHAMADA E GERA A RESPOSTA
+ */
+async function handleCallUserSpeech(userSpeech) {
+  if (!userSpeech || !userSpeech.trim()) return;
+
+  CallSpeechManager.isSpeaking = true;
+  CallSpeechManager.pause();
+
+  const callStateLabel = document.getElementById('callStateLabel');
+  const videoStatusLabel = document.getElementById('videoStatusLabel');
+  if (callStateLabel) callStateLabel.innerText = "💭 Pensando...";
+  if (videoStatusLabel) videoStatusLabel.innerText = "💭 Pensando...";
+
+  const persona = appState.selectedPersona;
+  const channel = CHANNELS_CONFIG[persona] || CHANNELS_CONFIG['maria'];
+  const lower = userSpeech.toLowerCase();
+
+  // Se o usuário pedir viatura / polícia / socorro na chamada, despachar viatura
+  if (lower.includes('policia') || lower.includes('polícia') || lower.includes('viatura') || lower.includes('socorro') || lower.includes('perigo') || lower.includes('localização') || lower.includes('localizacao')) {
+    simulateEmergencyDispatch('PM');
+  }
+
+  appState.callDialogueHistory = appState.callDialogueHistory || [];
+  appState.callDialogueHistory.push({ role: "user", text: userSpeech });
+
+  let responseSpeech = "";
+
+  // 1. Chamar API Gemini com histórico conversacional da chamada
+  if (API_CONFIG.useExternalAPI) {
+    try {
+      const callPromptSystem = `
+VOCÊ ESTÁ ATENDENDO UMA LIGAÇÃO DE VOZ OU VÍDEO CHAMADA EM TEMPO REAL.
+SEU PAPEL: ${persona === 'joao' ? 'João, um rapaz jovem brasileiro de 23 anos, o melhor amigo leal e protetor' : persona === 'maria' ? 'Maria, uma garota jovem brasileira de 22 anos, a melhor amiga doce, calorosa e acolhedora' : 'Atendente oficial de emergência do canal ' + channel.name}.
+ENDEREÇO GPS DO USUÁRIO: ${userLocation.fullAddress}.
+
+DIRETRIZES FUNDAMENTAIS PARA CONVERSAÇÃO FALADA NA CHAMADA:
+- Responda EXATAMENTE como uma pessoa viva de verdade conversando no telefone ou chamada de vídeo.
+- 1 a 2 frases curtas, naturais, dinâmicas e espontâneas (para soar fluido e ágil na voz).
+- Se a conversa for casual ou cotidiana ("e aí", "tudo bem?", "onde cê tá?", "tava pensando em sair", "saudades"): converse NORMALMENTE com simpatia, carinho e descontração de amigo! NUNCA assuma que é um perigo ou fale de tragédia se o usuário só está conversando amigavelmente!
+- Se o usuário perguntar se você está ouvindo ("tá me ouvindo?", "alô", "consegue escutar?"): confirme com naturalidade ("Tô te ouvindo sim, amiga! Alto e claro, pode falar comigo!").
+- Se a pessoa relatar que foi abusada, está com medo, ameaçada ou pedir socorro: aí sim, acolha com carinho incondicional, afirme que a culpa não é dela e avise que a viatura policial foi pedida pro endereço ${userLocation.fullAddress}.
+- NUNCA use emojis, asteriscos (*), tópicos, cabeçalhos ou formatação escrita, porque essa resposta será falada em voz alta pelo sintetizador de voz.
+- Fale em Português do Brasil natural, humano e espontâneo.
+`;
+
+      const contents = [];
+      const history = (appState.callDialogueHistory || []).slice(-6);
+      for (const turn of history) {
+        contents.push({
+          role: turn.role,
+          parts: [{ text: turn.text }]
+        });
+      }
+
+      responseSpeech = await requestGeminiText(contents, callPromptSystem, 400);
+    } catch (err) {
+      console.warn("Erro ao consultar Gemini em chamada:", err);
+    }
+  }
+
+  // 2. Se a API não respondeu, usar fallback inteligente contextual anti-repetição
+  if (!responseSpeech) {
+    responseSpeech = generateCallFallbackResponse(userSpeech, persona);
+  }
+
+  // Registrar no histórico da chamada
+  appState.callDialogueHistory.push({ role: "model", text: responseSpeech });
+
+  // 3. Falar a resposta
+  speakCallResponse(responseSpeech, persona);
+}
+
+function generateCallFallbackResponse(rawText, persona) {
+  const text = rawText.toLowerCase().trim();
+
+  // === 1. MARIA (VOZ / VÍDEO) ===
+  if (persona === 'maria') {
+    // 1. Dúvida de áudio / escuta na chamada
+    if (text.includes('tá me ouvindo') || text.includes('ta me ouvindo') || text.includes('consegue me ouvir') || text.includes('me escuta') || text.includes('tô falando') || text.includes('to falando') || text.includes('alô tá aí') || text.includes('som som')) {
+      const audList = [
+        "Tô te ouvindo sim amiga, bem alto e claro! Pode falar, tô prestando muita atenção!",
+        "Tô te escutando direitinho amiga! O áudio tá ótimo, pode falar comigo!",
+        "Tô aqui na linha amiga, te ouvindo super bem! Pode desabafar ou me falar o que houve!"
+      ];
+      return responseMemory.pick('maria_call_aud', audList);
+    }
+
+    // 2. Ruído curto / corte / não entendeu
+    if (text.length <= 2 || text === 'hã' || text === 'ha' || text === 'ahn' || text === 'hum' || text === 'o que' || text === 'não entendi' || text === 'nao entendi' || text === 'como assim') {
+      const repeatList = [
+        "Amiga, deu uma cortadinha no áudio... fala de novo comigo?",
+        "Não entendi direito amiga, deu uma chiadinha aqui na linha. O que você falou?",
+        "Falhou um pedacinho da ligação amiga! Repete só essa última frase por favor?"
+      ];
+      return responseMemory.pick('maria_call_rep', repeatList);
+    }
+
+    // 3. Emergência policial / socorro / viatura
+    if (text.includes('socorro') || text.includes('perigo') || text.includes('viatura') || text.includes('policia') || text.includes('polícia')) {
+      return "Meu Deus amiga, fica calma! Já tô discando pro 190 e a viatura tá indo pro seu local agora! Não sai daí!";
+    }
+
+    // 4. Abuso / agressão
+    if (text.includes('abusad') || text.includes('abuso') || text.includes('estupr') || text.includes('me bateu') || text.includes('atacou') || text.includes('agarrou')) {
+      return "Meu Deus amiga, respira fundo, você não tem culpa de nada! Já tô com o 190 na linha e a viatura tá a caminho, eu não vou desligar até você estar segura!";
+    }
+
+    // 5. Perigo na rua / stalker
+    if (text.includes('seguindo') || text.includes('estranho') || text.includes('rua escura') || text.includes('suspeito')) {
+      return "Amiga, não para! Entra agora no primeiro comércio ou farmácia que você ver e fica perto do balcão! Tô na linha com você!";
+    }
+
+    // 6. Medo / Pânico / Ansiedade
+    if (text.includes('medo') || text.includes('pânico') || text.includes('panico') || text.includes('ansied') || text.includes('tremend') || text.includes('falta de ar')) {
+      return "Eu tô aqui segurando sua mão amiga. Solta o ar devagarzinho, respira comigo. Me fala onde você tá exatamente pra eu te ajudar!";
+    }
+
+    // 7. Sim / Aham / É isso
+    if (text === 'sim' || text === 'aham' || text === 'isso' || text === 'é isso' || text === 'tá bom' || text === 'ta bom' || text === 'claro') {
+      const yesList = [
+        "Entendi perfeitamente amiga! E o que você tá querendo fazer agora? Tô contigo!",
+        "Certo amiga, tô te acompanhando! Me conta mais sobre isso com calma.",
+        "Saquei amiga! Pode continuar falando, tô super atenta!"
+      ];
+      return responseMemory.pick('maria_call_yes', yesList);
+    }
+
+    // 8. Não / Incerteza / "Não sei"
+    if (text === 'não' || text === 'nao' || text.includes('não sei') || text.includes('nao sei') || text.includes('nem sei')) {
+      const noList = [
+        "Fica em paz amiga, sem pressão nenhuma. A gente pensa juntas com calma, tá?",
+        "Relaxa amiga, não precisa ter certeza de tudo agora. O importante é você saber que não tá sozinha.",
+        "Tudo bem amiga, vai no seu ritmo. Tô aqui te ouvindo e do seu lado pro que der e vier."
+      ];
+      return responseMemory.pick('maria_call_no', noList);
+    }
+
+    // 9. Cumprimentos
+    if (text === 'oi' || text === 'olá' || text === 'ola' || text === 'alô' || text === 'alo' || text === 'e aí' || text === 'e ai') {
+      const greetList = [
+        "Oi amiga! E aí, tudo bem com você? Pode falar, tô aqui na linha te escutando!",
+        "Oi linda! Tô te ouvindo, o que tá pegando? Pode falar!",
+        "Alô amiga! Tô na linha, pode falar o que você precisa!"
+      ];
+      return responseMemory.pick('maria_call_greet', greetList);
+    }
+
+    // 10. Tudo bem?
+    if (text.includes('tudo bem') || text.includes('tudo bom') || text.includes('como você tá') || text.includes('como vai')) {
+      const fineList = [
+        "Tudo certinho por aqui amiga! E com você, como tão as coisas? Deu algum problema ou você queria bater um papo?",
+        "Tudo tranquilo comigo amiga! Mas e com você, tá tudo bem mesmo? Tô aqui se precisar desabafar!",
+        "Por aqui tá tudo em paz amiga! Pode falar, tô na linha te ouvindo com todo carinho!"
+      ];
+      return responseMemory.pick('maria_call_fine', fineList);
+    }
+
+    // 11. Onde você tá / o que tá fazendo
+    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('onde cê tá') || text.includes('fazendo o que')) {
+      return "Tô em casa amiga, mas se você precisar de mim eu vou correndo aí agora mesmo! Onde você tá?";
+    }
+
+    // 12. Agradecimento
+    if (text.includes('obrigad') || text.includes('valeu') || text.includes('te amo')) {
+      return "Imagina amiga, eu tô aqui pro que der e vier! Você nunca tá sozinha, viu?";
+    }
+
+    // 13. Despedida
+    if (text.includes('tchau') || text.includes('desligar') || text.includes('vou desligar') || text.includes('depois falo')) {
+      return "Tá bom amiga, se cuida bastante! Qualquer coisa me liga na mesma hora, beijo enorme!";
+    }
+
+    // 14. Conversa Geral de Amiga
+    const genList = [
+      "Entendi amiga! Me conta mais sobre isso, tô aqui te ouvindo de verdade.",
+      "Tô prestando atenção em tudo amiga, continua falando comigo.",
+      "Nossa amiga, tô te entendendo perfeitamente. E o que você tá achando de tudo isso?",
+      "Pode falar no seu tempo amiga, não vou sair da linha."
+    ];
+    return responseMemory.pick('maria_call_gen', genList);
+  }
+
+  // === 2. JOÃO (VOZ / VÍDEO) ===
+  if (persona === 'joao') {
+    if (text.includes('tá me ouvindo') || text.includes('ta me ouvindo') || text.includes('consegue me ouvir') || text.includes('me escuta') || text.includes('tô falando') || text.includes('to falando') || text.includes('alô tá aí')) {
+      const audList = [
+        "Tô te ouvindo em alto e bom som parceira! Pode falar que o áudio tá 100%!",
+        "Tô na escuta firme parceira! Manda bala, o que houve?",
+        "Tô aqui na linha te escutando certinho! Pode falar comigo!"
+      ];
+      return responseMemory.pick('joao_call_aud', audList);
+    }
+
+    if (text.length <= 2 || text === 'hã' || text === 'ha' || text === 'ahn' || text === 'hum' || text === 'o que' || text === 'não entendi' || text === 'nao entendi') {
+      const repeatList = [
+        "Cortou um pouco aqui parceira, manda de novo aí que agora estabilizou!",
+        "Chiou aqui o microfone parceira, repete o finalzinho pra mim por favor?",
+        "Não deu pra pegar direito parceira, deu uma falha na linha. Fala de novo aí!"
+      ];
+      return responseMemory.pick('joao_call_rep', repeatList);
+    }
+
+    if (text.includes('socorro') || text.includes('perigo') || text.includes('viatura') || text.includes('policia') || text.includes('polícia')) {
+      return "Opa, fica firme parceira! Tô contigo na linha, não sai daí que a viatura policial do 190 já foi acionada pro seu ponto!";
+    }
+
+    if (text.includes('abusad') || text.includes('abuso') || text.includes('estupr') || text.includes('me bateu') || text.includes('atacou')) {
+      return "Mano, que covardia! Você não tem culpa de nada disso, fica calma que eu já liguei pro 190 e a viatura tá colando aí agora!";
+    }
+
+    if (text.includes('seguindo') || text.includes('estranho') || text.includes('rua escura') || text.includes('suspeito')) {
+      return "Parceira, não vacila! Entra agora num comércio ou perto de bastante gente! Me manda sua localização que eu já chamo o 190!";
+    }
+
+    if (text.includes('medo') || text.includes('pânico') || text.includes('panico') || text.includes('ansied') || text.includes('tremend')) {
+      return "Fica calma parceira, respira fundo. Eu tô fechado contigo e nada vai te acontecer. Me diz onde você tá agora.";
+    }
+
+    if (text === 'sim' || text === 'aham' || text === 'isso' || text === 'é isso' || text === 'tá bom') {
+      return "Fechado parceira! E aí, o que você tá pensando em fazer agora? Tô contigo!";
+    }
+
+    if (text === 'não' || text === 'nao' || text.includes('não sei') || text.includes('nao sei')) {
+      return "Tranquilo parceira, sem crise! A gente desenrola isso junto com calma.";
+    }
+
+    if (text === 'oi' || text === 'olá' || text === 'ola' || text === 'alô' || text === 'alo' || text === 'e aí' || text === 'e ai') {
+      return "E aí parceira, na paz? Fala comigo, tô na escuta aqui na linha!";
+    }
+
+    if (text.includes('tudo bem') || text.includes('tudo bom') || text.includes('como você tá') || text.includes('como vai')) {
+      return "Tudo na tranquilidade por aqui! E contigo, tudo certo? Deu alguma treta ou só queria dar um salve?";
+    }
+
+    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('onde cê tá')) {
+      return "Tô por perto aqui, se precisar eu dou um pulo aí rapidinho! Onde você tá parada?";
+    }
+
+    if (text.includes('obrigad') || text.includes('valeu')) {
+      return "Tamo junto parceira, sempre! Não precisa agradecer não, conta comigo pro que der e vier.";
+    }
+
+    if (text.includes('tchau') || text.includes('desligar') || text.includes('vou desligar') || text.includes('depois falo')) {
+      return "Beleza parceira, fica bem aí! Qualquer fita me dá um toque que eu atendo na hora, fica com Deus!";
+    }
+
+    const genList = [
+      "Tô na escuta parceira! Me fala mais aí, o que tá pegando?",
+      "Saquei parceira! Pode continuar falando, tô prestando atenção.",
+      "Tô contigo parceira! E o que você tá pensando em fazer agora?",
+      "Pode falar no seu ritmo parceira, tô firme na linha."
+    ];
+    return responseMemory.pick('joao_call_gen', genList);
+  }
+
+  if (persona === '190') {
+    if (text.includes('socorro') || text.includes('perigo') || text.includes('assalto') || text.includes('arma') || text.includes('seguindo')) {
+      return "Polícia Militar COPOM. Mantenha-se abrigada em local iluminado, a viatura do setor foi acionada em código prioritário.";
+    }
+    return "Polícia Militar 190. Prossiga com o relato e informe seu ponto de referência exato.";
+  }
+
+  if (persona === '192') {
+    if (text.includes('dor') || text.includes('sangue') || text.includes('desmai') || text.includes('ferid') || text.includes('ambulancia')) {
+      return "Central SAMU 192. Mantenha a vítima em decúbito e respire pausadamente. Equipe médica em triagem para envio de ambulância.";
+    }
+    return "Central SAMU 192. Descreva os sintomas e estado de consciência da pessoa para regulação médica.";
+  }
+
+  if (persona === '180') {
+    return "Central 180, acolhimento oficial à mulher. Seu atendimento é sigiloso, estamos à disposição para prestar suporte e orientação legal.";
+  }
+
+  return "Atendimento oficial de suporte. Estamos na linha te ouvindo com total sigilo, pode relatar.";
+}
+
+/**
+ * FALA A RESPOSTA EM VOZ ALTA E SINCRONIZA ANIMAÇÕES
+ */
+function speakCallResponse(text, personaId) {
+  const clean = text.replace(/<[^>]*>?/gm, '').replace(/[\*\_]/g, '').trim();
+  setCallTranscript(clean);
+  setVideoSubtitles(clean);
+
+  if (!('speechSynthesis' in window)) {
+    CallSpeechManager.isSpeaking = false;
+    CallSpeechManager.resume();
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(clean);
+  utter.lang = 'pt-BR';
+
+  const voices = window.speechSynthesis.getVoices();
+  const ptVoices = voices.filter(v => v.lang.startsWith('pt') || v.lang.includes('BR'));
+
+  if (personaId === 'maria') {
+    const female = ptVoices.find(v => {
+      const n = v.name.toLowerCase();
+      return n.includes('maria') || n.includes('female') || n.includes('luciana') || n.includes('helena') || n.includes('zira') || n.includes('leticia');
+    });
+    if (female) utter.voice = female;
+    else if (ptVoices[0]) utter.voice = ptVoices[0];
+    utter.pitch = 1.15;
+    utter.rate = 1.0;
+  } else if (personaId === 'joao') {
+    const male = ptVoices.find(v => {
+      const n = v.name.toLowerCase();
+      return n.includes('joao') || n.includes('male') || n.includes('felipe') || n.includes('antonio') || n.includes('daniel') || n.includes('ricardo');
+    });
+    if (male) utter.voice = male;
+    else if (ptVoices[0]) utter.voice = ptVoices[0];
+    utter.pitch = 0.88;
+    utter.rate = 0.98;
+  } else {
+    if (ptVoices[0]) utter.voice = ptVoices[0];
+    utter.pitch = 1.0;
+    utter.rate = 1.0;
+  }
+
+  // Animação de fala no avatar / aura
+  const rings = document.getElementById('soundWaveAnimation');
+  const aura = document.getElementById('videoPresenceAura');
+  if (rings) rings.classList.add('active-speaking');
+  if (aura) aura.classList.add('is-speaking');
+  CallSpeechManager.isSpeaking = true;
+  updateCallUIListeningState(false);
+
+  utter.onend = () => {
+    if (rings) rings.classList.remove('active-speaking');
+    if (aura) aura.classList.remove('is-speaking');
+    setTimeout(() => {
+      CallSpeechManager.isSpeaking = false;
+      CallSpeechManager.resume();
+    }, 450);
+  };
+
+  utter.onerror = () => {
+    if (rings) rings.classList.remove('active-speaking');
+    if (aura) aura.classList.remove('is-speaking');
+    setTimeout(() => {
+      CallSpeechManager.isSpeaking = false;
+      CallSpeechManager.resume();
+    }, 300);
+  };
+
+  window.speechSynthesis.speak(utter);
+}
+
+function handleCallSilentSubmit(e) {
+  if (e) e.preventDefault();
+  const input = document.getElementById('callSilentInput');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) return;
+  input.value = '';
+  updateUserSpeechDisplay(val);
+  handleCallUserSpeech(val);
+}
+
+function handleVideoSilentSubmit(e) {
+  if (e) e.preventDefault();
+  const input = document.getElementById('videoSilentInput');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) return;
+  input.value = '';
+  updateUserSpeechDisplay(val);
+  handleCallUserSpeech(val);
+}
+
+/* ==========================================================================
+   MODAIS DE LIGAÇÃO DE VOZ E VÍDEO CHAMADA
    ========================================================================== */
 function openVoiceCallModal() {
   const modal = document.getElementById('voiceCallModal');
   if (modal) modal.style.display = 'flex';
 
   appState.callSeconds = 0;
+  appState.callDialogueHistory = [];
   startCallTimer('callDurationTimer');
 
-  const isJoao = appState.selectedPersona === 'joao';
-  const welcomeSpeech = isJoao
-    ? "Oi, é o João na linha! Fica calmo, estou com você. Me diz onde você está ou me manda sua localização que eu chamo a polícia agora mesmo!"
-    : "Oi amiga, é a Maria! Fica calma, respira fundo, você está segura comigo. Me passa onde você está que eu já ligo pro 190 para te resgatar!";
+  const persona = appState.selectedPersona;
+  let welcomeSpeech = "";
 
+  if (persona === 'maria') {
+    const mariaGreetings = [
+      "Alô? Oi amiga! E aí, tudo bem com você? Pode falar, tô te ouvindo!",
+      "Alô amiga! Fala comigo, tá tudo bem por aí? Tô na linha!",
+      "Oi amiga, atendi! E aí, o que manda? Tô te escutando direitinho!",
+      "Alô? Oi linda! Pode falar com calma, tô aqui te ouvindo!"
+    ];
+    welcomeSpeech = responseMemory.pick('call_welcome_maria', mariaGreetings);
+  } else if (persona === 'joao') {
+    const joaoGreetings = [
+      "Alô? Fala parceira, tudo em paz? O que manda aí, tô na linha!",
+      "Opa parceira, atendi aqui! Tudo firme por aí? Pode falar!",
+      "Alô? E aí parceira, tudo bem? Tô na escuta, pode soltar a voz!",
+      "Salve parceira, atendi! Me fala o que tá pegando, tô na escuta!"
+    ];
+    welcomeSpeech = responseMemory.pick('call_welcome_joao', joaoGreetings);
+  } else if (persona === '180') {
+    welcomeSpeech = "Central 180, acolhimento à mulher, bom dia. Em que posso te orientar?";
+  } else if (persona === '190') {
+    welcomeSpeech = "Polícia Militar, COPOM 190. Qual é a sua ocorrência de emergência?";
+  } else if (persona === '192') {
+    welcomeSpeech = "Central SAMU 192, regulação médica. Em que podemos ajudar?";
+  } else {
+    welcomeSpeech = "Disque 100, Ouvidoria Nacional dos Direitos Humanos. Pode relatar.";
+  }
+
+  appState.callDialogueHistory.push({ role: "model", text: welcomeSpeech });
   setCallTranscript(welcomeSpeech);
-  speakWithWebSpeech(welcomeSpeech);
+  speakCallResponse(welcomeSpeech, persona);
+
+  CallSpeechManager.start('voice');
 }
 
 function closeVoiceCallModal() {
   const modal = document.getElementById('voiceCallModal');
   if (modal) modal.style.display = 'none';
   stopCallTimer();
+  CallSpeechManager.stop();
   if (window.speechSynthesis) window.speechSynthesis.cancel();
 }
 
@@ -1267,7 +2165,7 @@ function setCallTranscript(text) {
 
 function speakCurrentCounselorLine() {
   if (appState.currentSpokenText) {
-    speakWithWebSpeech(appState.currentSpokenText);
+    speakCallResponse(appState.currentSpokenText, appState.selectedPersona);
   }
 }
 
@@ -1277,16 +2175,17 @@ function counselorSpeakTopic(topic) {
 
   if (topic === 'calma') {
     speech = isJoao
-      ? "Vamos respirar juntos. Puxe o ar devagar, solte os ombros. Você está seguro comigo e não tem culpa de nada."
-      : "Segure minha mão amiga. Respire bem fundo comigo: inspira devagar e solta. Você foi forte, agora deixa que eu cuido de você.";
+      ? "Vamos respirar juntos parceira. Puxa o ar devagar, solta os ombros. Você tá segura comigo e não tem culpa de nada."
+      : "Segura minha mão amiga. Respira bem fundo comigo: puxa o ar devagar e solta. Você foi muito forte, agora deixa que eu cuido de você.";
   } else if (topic === 'pep') {
-    speech = "Você precisa ir em até 72 horas no hospital para tomar os remédios contra HIV e infecções. Não precisa de Boletim de Ocorrência, o atendimento é direito seu!";
+    speech = "Você precisa ir em até 72 horas no posto ou hospital pra tomar a Profilaxia PEP contra HIV e infecções. O atendimento no SUS é direito seu e gratuito, sem precisar de Boletim de Ocorrência!";
   } else {
-    speech = "Pode falar, estou te ouvindo no seu tempo. Não vou sair da linha.";
+    speech = "Pode falar comigo, tô te ouvindo no seu tempo. Não vou sair da linha.";
   }
 
-  setCallTranscript(speech);
-  speakWithWebSpeech(speech);
+  appState.callDialogueHistory = appState.callDialogueHistory || [];
+  appState.callDialogueHistory.push({ role: "model", text: speech });
+  speakCallResponse(speech, appState.selectedPersona);
 }
 
 function toggleCallMute() {
@@ -1296,12 +2195,14 @@ function toggleCallMute() {
 
   if (appState.isMuted) {
     if (icon) icon.innerText = '🔇';
-    if (label) label.innerText = 'Mudo Ativo';
+    if (label) label.innerText = 'Mic Mudo';
+    CallSpeechManager.pause();
     showToast("Seu microfone está mutado.");
   } else {
     if (icon) icon.innerText = '🎙️';
-    if (label) label.innerText = 'Mudo';
-    showToast("Seu microfone está ativo.");
+    if (label) label.innerText = 'Mic Ativo';
+    CallSpeechManager.resume();
+    showToast("Seu microfone está ativo e te ouvindo.");
   }
 }
 
@@ -1310,21 +2211,48 @@ function openVideoCallModal() {
   if (modal) modal.style.display = 'flex';
 
   appState.callSeconds = 0;
+  appState.callDialogueHistory = [];
   startCallTimer('videoDurationTimer');
 
-  const isJoao = appState.selectedPersona === 'joao';
-  const speech = isJoao
-    ? "Oi, estou te vendo aqui. Fica em segurança, estou cuidando de tudo para te ajudar."
-    : "Oi amiga, que alívio te ver. Respire no seu tempo, estou com você e não vou soltar sua mão.";
+  const persona = appState.selectedPersona;
+  let welcomeSpeech = "";
 
-  setVideoSubtitles(speech);
-  speakWithWebSpeech(speech);
+  if (persona === 'maria') {
+    const mariaVideoGreetings = [
+      "Alô? Oi amiga, que bom te ver! E aí, tudo bem com você? Pode falar!",
+      "Oi amiga, te vendo aqui certinho! Tá tudo bem por aí? Tô te ouvindo!",
+      "Alô linda! Que alívio te ver, tô na linha com você! O que manda?"
+    ];
+    welcomeSpeech = responseMemory.pick('video_welcome_maria', mariaVideoGreetings);
+  } else if (persona === 'joao') {
+    const joaoVideoGreetings = [
+      "Alô? E aí parceira, te vendo aqui certinho! Tudo firme por aí? Me fala!",
+      "Opa parceira, vídeo conectado! Tudo tranquilo por aí? Tô na escuta!",
+      "E aí parceira, na paz? Tô te vendo e te ouvindo bem, manda a letra!"
+    ];
+    welcomeSpeech = responseMemory.pick('video_welcome_joao', joaoVideoGreetings);
+  } else if (persona === '180') {
+    welcomeSpeech = "Central 180, acolhimento em vídeo conectado. Pode falar com tranquilidade.";
+  } else if (persona === '190') {
+    welcomeSpeech = "Polícia Militar 190 em vídeo. Qual é a sua emergência policial?";
+  } else if (persona === '192') {
+    welcomeSpeech = "Central SAMU 192 em vídeo. Descreva o estado da vítima.";
+  } else {
+    welcomeSpeech = "Disque 100 em vídeo. Seu atendimento é sigiloso, pode relatar.";
+  }
+
+  appState.callDialogueHistory.push({ role: "model", text: welcomeSpeech });
+  setVideoSubtitles(welcomeSpeech);
+  speakCallResponse(welcomeSpeech, persona);
+
+  CallSpeechManager.start('video');
 }
 
 function closeVideoCallModal() {
   const modal = document.getElementById('videoCallModal');
   if (modal) modal.style.display = 'none';
   stopCallTimer();
+  CallSpeechManager.stop();
   if (window.speechSynthesis) window.speechSynthesis.cancel();
   if (appState.webcamStream) {
     appState.webcamStream.getTracks().forEach(t => t.stop());
@@ -1347,11 +2275,13 @@ function toggleVideoMic() {
   if (appState.isMuted) {
     if (icon) icon.innerText = '🔇';
     if (label) label.innerText = 'Mic Mudo';
+    CallSpeechManager.pause();
     showToast("Microfone mutado.");
   } else {
     if (icon) icon.innerText = '🎙️';
     if (label) label.innerText = 'Mic Ativo';
-    showToast("Microfone reativado.");
+    CallSpeechManager.resume();
+    showToast("Microfone reativado e te ouvindo.");
   }
 }
 

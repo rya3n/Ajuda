@@ -1751,3 +1751,458 @@ body.theme-dark .samu-pep-header {
   color: var(--color-olive-dark);
   font-weight: 700;
 }
+
+/* ==========================================================================
+   ESTILOS DE RECONHECIMENTO DE FALA E DIÁLOGO EM CHAMADA (VOZ & VÍDEO)
+   ========================================================================== */
+
+/* 1. Transcrição da fala do usuário na chamada de voz */
+.call-user-speech-box {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: rgba(62, 74, 52, 0.08);
+  border-left: 3px solid var(--color-olive);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  transition: var(--transition-smooth);
+}
+
+body.theme-dark .call-user-speech-box {
+  background: rgba(167, 180, 154, 0.12);
+  border-left-color: var(--color-sage);
+}
+
+.user-speech-tag {
+  font-weight: 700;
+  color: var(--color-olive-dark);
+  white-space: nowrap;
+}
+
+body.theme-dark .user-speech-tag {
+  color: #E8EDE4;
+}
+
+.user-speech-content {
+  color: var(--text-main);
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* 2. Formulário silencioso na chamada de voz */
+.call-silent-input-box {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  width: 100%;
+}
+
+.call-silent-input-box input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  color: var(--text-main);
+  outline: none;
+  transition: var(--transition-smooth);
+}
+
+body.theme-dark .call-silent-input-box input {
+  background: rgba(20, 27, 18, 0.7);
+  border-color: var(--border-subtle);
+}
+
+.call-silent-input-box input:focus {
+  border-color: var(--color-terracotta);
+}
+
+.call-silent-input-box button {
+  background: var(--color-olive);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 0 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.call-silent-input-box button:hover {
+  background: var(--color-olive-dark);
+}
+
+/* 3. Indicador de escuta na vídeo chamada */
+.video-status-indicator {
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  color: #FFFFFF;
+  padding: 5px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* 4. Barra de legendas da vídeo chamada aprimorada */
+.video-subtitles-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+}
+
+.video-user-live-speech {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(0, 0, 0, 0.45);
+  padding: 3px 10px;
+  border-radius: 4px;
+}
+
+.video-user-speech-text {
+  font-style: italic;
+  color: #FDE68A;
+}
+
+.video-counselor-speech {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* 5. Input silencioso na vídeo chamada */
+.video-silent-form {
+  position: absolute;
+  bottom: 74px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 440px;
+  display: flex;
+  gap: 8px;
+  z-index: 15;
+}
+
+.video-silent-form input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  color: #FFFFFF;
+  font-size: 0.82rem;
+  outline: none;
+}
+
+.video-silent-form input:focus {
+  border-color: var(--color-terracotta);
+}
+
+.video-silent-form button {
+  background: var(--color-terracotta);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 0 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* 6. Animações de fala ativa */
+.sound-wave-rings.active-speaking .ring {
+  animation-duration: 1.2s !important;
+  border-color: var(--color-terracotta) !important;
+  opacity: 0.8 !important;
+}
+
+.video-presence-aura.is-speaking {
+  animation: auraPulse 1s infinite alternate !important;
+  box-shadow: 0 0 60px rgba(201, 123, 91, 0.6) !important;
+}
+
+/* ==========================================================================
+   7. MODAL DE CONFIGURAÇÃO E STATUS DA IA GEMINI
+   ========================================================================== */
+.btn-ai-config {
+  background: rgba(201, 123, 91, 0.12) !important;
+  border-color: rgba(201, 123, 91, 0.35) !important;
+  color: var(--color-terracotta) !important;
+  font-weight: 600 !important;
+}
+
+.btn-ai-config:hover {
+  background: rgba(201, 123, 91, 0.22) !important;
+  transform: translateY(-1px);
+}
+
+.btn-ai-config.is-connected {
+  background: rgba(74, 93, 35, 0.15) !important;
+  border-color: rgba(74, 93, 35, 0.4) !important;
+  color: var(--color-olive-dark) !important;
+}
+
+body.theme-dark .btn-ai-config.is-connected {
+  background: rgba(144, 169, 85, 0.2) !important;
+  border-color: rgba(144, 169, 85, 0.4) !important;
+  color: #B5D282 !important;
+}
+
+.ai-config-modal-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  width: 90%;
+  max-width: 520px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: modalScaleIn 0.25s ease-out;
+}
+
+.ai-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(201, 123, 91, 0.06);
+}
+
+.ai-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-header-title h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.ai-sparkle-icon {
+  font-size: 1.25rem;
+}
+
+.ai-modal-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition-smooth);
+}
+
+.ai-modal-close-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text-main);
+}
+
+.ai-modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.ai-status-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: rgba(245, 237, 228, 0.6);
+  border: 1px solid var(--border-subtle);
+  transition: var(--transition-smooth);
+}
+
+body.theme-dark .ai-status-card {
+  background: rgba(28, 36, 25, 0.8);
+}
+
+.ai-status-card.status-connected {
+  background: rgba(74, 93, 35, 0.12);
+  border-color: rgba(74, 93, 35, 0.35);
+}
+
+.ai-status-card.status-local {
+  background: rgba(30, 64, 175, 0.08);
+  border-color: rgba(30, 64, 175, 0.25);
+}
+
+.ai-status-indicator-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #3B82F6;
+  margin-top: 4px;
+  flex-shrink: 0;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.status-connected .ai-status-indicator-dot {
+  background: #10B981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+}
+
+.ai-status-texts h4 {
+  margin: 0 0 4px 0;
+  font-size: 0.95rem;
+  color: var(--text-main);
+}
+
+.ai-status-texts p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.ai-field-group label {
+  display: block;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.ai-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-input-row input {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  font-size: 0.88rem;
+  color: var(--text-main);
+  outline: none;
+  font-family: monospace;
+}
+
+.ai-input-row input:focus {
+  border-color: var(--color-terracotta);
+}
+
+.btn-toggle-eye {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.ai-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.ai-hint a {
+  color: var(--color-terracotta);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.ai-features-box {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ai-feat-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+.feat-icon {
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+.ai-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-subtle);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.btn-ai-secondary {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition-smooth);
+}
+
+.btn-ai-secondary:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-main);
+}
+
+.btn-ai-primary {
+  background: var(--color-terracotta);
+  border: none;
+  color: #FFFFFF;
+  border-radius: var(--radius-sm);
+  padding: 8px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  box-shadow: 0 2px 8px rgba(201, 123, 91, 0.3);
+}
+
+.btn-ai-primary:hover {
+  background: var(--color-terracotta-hover);
+  transform: translateY(-1px);
+}
+
