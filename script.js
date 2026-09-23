@@ -24,13 +24,29 @@ const API_CONFIG = {
  */
 const responseMemory = {
   lastPicked: {},
+  recentHistory: [],
   pick(key, options) {
     if (!options || options.length === 0) return "";
     if (options.length === 1) return options[0];
-    const last = this.lastPicked[key];
-    const filtered = options.filter(opt => opt !== last);
-    const chosen = filtered[Math.floor(Math.random() * filtered.length)] || options[0];
+    
+    // 1. Filtrar frases que foram ditas recentemente nos últimos 10 turnos
+    let pool = options.filter(opt => !this.recentHistory.includes(opt));
+    
+    // 2. Se todas do pool já foram usadas recentemente, ao menos evita a última dita nesta categoria
+    if (pool.length === 0) {
+      const last = this.lastPicked[key];
+      pool = options.filter(opt => opt !== last);
+    }
+    
+    const chosen = pool[Math.floor(Math.random() * pool.length)] || options[0];
     this.lastPicked[key] = chosen;
+    
+    // Manter histórico das últimas 10 frases
+    this.recentHistory.push(chosen);
+    if (this.recentHistory.length > 10) {
+      this.recentHistory.shift();
+    }
+    
     return chosen;
   }
 };
@@ -1198,10 +1214,76 @@ function generateSpecializedAIResponse(rawText, persona) {
       return responseMemory.pick('maria_greet', greetList);
     }
 
+    // Reclamação / "Você não ouviu?" / "Não entendeu?" / "Tô te chamando" / "Tá repetindo"
+    if (text.includes('não ouviu') || text.includes('nao ouviu') || text.includes('não me ouviu') || text.includes('nao me ouviu') || text.includes('não entendeu') || text.includes('nao entendeu') || text.includes('repetindo') || text.includes('mesma coisa') || text.includes('não tá prestando') || text.includes('nao ta prestando') || text.includes('falando que tá') || text.includes('falei pra gente') || text.includes('tô te chamando') || text.includes('to te chamando') || text.includes('me escuta direito')) {
+      const mariaReclamList = [
+        `<p>Ai amiga, me perdoa, me perdi aqui por um segundo! Mas eu ouvi sim, você me chamou pra gente dar uma volta, né? Eu super topo, vamos sim! 💕</p>`,
+        `<p>Ai desculpa amiga, me distraí aqui um instantinho! Me perdoa! Pode falar que agora tô 100% ligada em você, bora sair!</p>`,
+        `<p>Nossa amiga, desculpa a lerdeza aqui! Mas tô prestando muita atenção agora, vamos combinar esse passeio sim, onde a gente vai?</p>`
+      ];
+      return responseMemory.pick('maria_reclam', mariaReclamList);
+    }
+
+    // Convite para sair / rolê / dar uma volta / passear
+    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei a maria') || text.includes('rolê') || text.includes('role') || text.includes('dar um role') || text.includes('dar um rolê') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('espairecer') || text.includes('bater perna')) {
+      const mariaSairList = [
+        `<p>Ai amiga, super topo! Vamos sim, tava doidinha pra sair um pouco de casa e bater papo com você! Onde a gente vai? 💕</p>`,
+        `<p>Bora amiga, com certeza! Que delícia de convite! Quer ir no shopping, comer alguma coisa gostosa ou dar uma volta na pracinha?</p>`,
+        `<p>Amei a ideia amiga! Vamos sim! Me fala que horas e onde a gente se encontra que eu já começo a me arrumar aqui!</p>`,
+        `<p>Super apoio amiga! Tava precisando tanto de um tempo com você pra gente rir e conversar. O que você tá pensando em fazer?</p>`
+      ];
+      return responseMemory.pick('maria_sair', mariaSairList);
+    }
+
+    // Comida / Lanche / Açaí / Fome / Restaurante
+    if (text.includes('comer') || text.includes('fome') || text.includes('lanche') || text.includes('hambúrguer') || text.includes('hamburguer') || text.includes('pizza') || text.includes('açaí') || text.includes('acai') || text.includes('café') || text.includes('cafe') || text.includes('docinho') || text.includes('almoçar') || text.includes('almocar') || text.includes('jantar')) {
+      const mariaFoodList = [
+        `<p>Ai amiga, você leu meus pensamentos! Tô louca pra comer um docinho ou um lanche bem gostoso! Onde a gente vai? 🍔🍕</p>`,
+        `<p>Bora amiga! Um açaí com bastante leite condensado ou um café gostoso, o que você acha? Me fala o que você tá com vontade!</p>`
+      ];
+      return responseMemory.pick('maria_food', mariaFoodList);
+    }
+
+    // Tédio / "Tô no tédio" / "Sem nada pra fazer"
+    if (text.includes('tédio') || text.includes('tedio') || text.includes('entediad') || text.includes('à toa') || text.includes('a toa') || text.includes('sem nada pra fazer') || text.includes('de bobeira') || text.includes('nada pra fazer')) {
+      const mariaTedioList = [
+        `<p>Ai amiga, também tava numa preguiça e num tédio aqui... ainda bem que você me mandou mensagem! Vamos inventar alguma coisa juntas?</p>`,
+        `<p>Tédio é horrível né amiga? Mas agora que a gente tá conversando o astral já melhora! Me conta uma novidade ou vamos dar uma volta!</p>`
+      ];
+      return responseMemory.pick('maria_tedio', mariaTedioList);
+    }
+
+    // Casa / Visita / "Vem aqui" / "Posso ir aí"
+    if (text.includes('minha casa') || text.includes('sua casa') || text.includes('aqui em casa') || text.includes('vem aqui') || text.includes('ir aí') || text.includes('ir ai') || text.includes('posso ir') || text.includes('quer vir')) {
+      const mariaCasaList = [
+        `<p>Ai amiga, posso ir aí sim! Se você quiser eu levo alguma coisa pra gente beliscar e papear até tarde! 🍿</p>`,
+        `<p>Vem aqui em casa amiga! A gente assiste uma série, come alguma coisa e bota todas as fofocas em dia!</p>`
+      ];
+      return responseMemory.pick('maria_casa', mariaCasaList);
+    }
+
+    // Risada / Humor
+    if (text.includes('kkk') || text.includes('haha') || text.includes('rsrs') || text.includes('engraçad') || text.includes('engracad') || text.includes('rindo')) {
+      const mariaLaughList = [
+        `<p>Hahaha, ai amiga, eu amo sua risada! Você é maravilhosa, me faz um bem danado! 😂❤️</p>`,
+        `<p>Kkkk, tô rindo aqui junto com você amiga! Bom demais conversar contigo!</p>`
+      ];
+      return responseMemory.pick('maria_laugh', mariaLaughList);
+    }
+
+    // Saudades / Carinho
+    if (text.includes('saudade') || text.includes('saudades') || text.includes('te amo') || text.includes('gosto de você') || text.includes('gosto muito')) {
+      const mariaLoveList = [
+        `<p>Ai amiga linda, eu também tava morrendo de saudades de você! Te amo tanto, você é muito especial pra mim! 💕</p>`,
+        `<p>Nossa amiga, que saudade que eu tava! Meu coração fica quentinho quando a gente se fala!</p>`
+      ];
+      return responseMemory.pick('maria_love', mariaLoveList);
+    }
+
     // Onde você tá / O que tá fazendo / Rotina
-    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('fazendo o que') || text.includes('tá fazendo') || text.includes('tá em casa')) {
+    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('fazendo o que') || text.includes('tá fazendo') || text.includes('tá em casa') || text.includes('tá livre') || text.includes('tá ocupada')) {
       const routineList = [
-        `<p>Tô em casa de boa amiga, mas se você precisar de qualquer coisa eu largo tudo e vou aí agora mesmo! Onde você tá?</p>`,
+        `<p>Tô em casa de boa amiga! Se você quiser que a gente faça alguma coisa ou bater perna, tô super disponível pra você!</p>`,
         `<p>Tô por aqui mexendo no celular e cuidando das coisas! Se você tiver precisando de mim ou quiser companhia, só me dar um grito!</p>`
       ];
       return responseMemory.pick('maria_routine', routineList);
@@ -1295,6 +1377,73 @@ function generateSpecializedAIResponse(rawText, persona) {
       return responseMemory.pick('joao_panic', panicList);
     }
 
+    // Reclamação / "Você não ouviu?" / "Não entendeu?" / "Tô te chamando" / "Tá repetindo"
+    if (text.includes('não ouviu') || text.includes('nao ouviu') || text.includes('não me ouviu') || text.includes('nao me ouviu') || text.includes('não entendeu') || text.includes('nao entendeu') || text.includes('repetindo') || text.includes('mesma coisa') || text.includes('não tá prestando') || text.includes('nao ta prestando') || text.includes('falando que tá') || text.includes('falei pra gente') || text.includes('tô te chamando') || text.includes('to te chamando') || text.includes('escuta direito') || text.includes('você é burro')) {
+      const joaoReclamList = [
+        `<p>Pode crer parceira, foi mal, me perdi aqui um segundo! Mas tô ligado, você me chamou pra gente sair, né? Bora sim, com certeza! Onde cê quer ir? 👊</p>`,
+        `<p>Pô parceira, vacilo meu aqui, desculpa! Ouvi sim, você tava me chamando pra dar um rolê! Demorou, topo na hora, fala onde a gente se encontra!</p>`,
+        `<p>Foi mal parceira, viajei na maionese aqui um instante! Mas agora tô focado em você, bora fechar esse rolê com certeza!</p>`
+      ];
+      return responseMemory.pick('joao_reclam', joaoReclamList);
+    }
+
+    // Convite para sair / rolê / encontrar / dar uma volta / passear
+    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei o joao') || text.includes('rolê') || text.includes('role') || text.includes('dar um role') || text.includes('dar um rolê') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('espairecer') || text.includes('bater perna')) {
+      const joaoSairList = [
+        `<p>Bora demais parceira! Fechado! Tava aqui de bobeira mesmo, onde cê quer ir? Shopping, comer alguma coisa ou dar uma volta? 👊</p>`,
+        `<p>Demorou parceira, topo na hora! Só me falar o lugar e que horas que eu colo aí contigo!</p>`,
+        `<p>Opa, animação total! Vamos sim, tô precisando dar uma espairecida também. O que cê tá a fim de fazer?</p>`,
+        `<p>Bora fechar esse rolê agora! Quer tomar um açaí, um lanche ou ir num lugar mais tranquilo? Você manda!</p>`
+      ];
+      return responseMemory.pick('joao_sair', joaoSairList);
+    }
+
+    // Comida / Lanche / Açaí / Fome / Restaurante
+    if (text.includes('comer') || text.includes('fome') || text.includes('lanche') || text.includes('hambúrguer') || text.includes('hamburguer') || text.includes('pizza') || text.includes('açaí') || text.includes('acai') || text.includes('café') || text.includes('cafe') || text.includes('docinho') || text.includes('almoçar') || text.includes('almocar') || text.includes('jantar')) {
+      const joaoFoodList = [
+        `<p>Nossa parceira, falou de comida é comigo mesmo! Tô com uma fome monstra, bora comer um hambúrguer ou uma pizza? 🍔🍕</p>`,
+        `<p>Bora tomar um açaí gelado parceira, desce muito bem hoje! Conheço um lugar show por perto!</p>`,
+        `<p>Fechou demais parceira, comida boa e resenha, perfeito! O que cê tá com vontade de comer?</p>`
+      ];
+      return responseMemory.pick('joao_food', joaoFoodList);
+    }
+
+    // Tédio / "Tô no tédio" / "Sem nada pra fazer"
+    if (text.includes('tédio') || text.includes('tedio') || text.includes('entediad') || text.includes('à toa') || text.includes('a toa') || text.includes('sem nada pra fazer') || text.includes('de bobeira') || text.includes('nada pra fazer')) {
+      const joaoTedioList = [
+        `<p>Puts parceira, tédio é osso mesmo! Mas relaxa que a gente inventa alguma coisa agora pra animar o dia! Quer sair ou prefere só trocar uma ideia?</p>`,
+        `<p>Tô ligado parceira, dia parado dá esse tédio mesmo. Bora agitar alguma coisa, me fala o que cê tá a fim de fazer!</p>`
+      ];
+      return responseMemory.pick('joao_tedio', joaoTedioList);
+    }
+
+    // Casa / Visita / "Vem aqui" / "Posso ir aí"
+    if (text.includes('minha casa') || text.includes('sua casa') || text.includes('aqui em casa') || text.includes('vem aqui') || text.includes('ir aí') || text.includes('ir ai') || text.includes('posso ir') || text.includes('quer vir')) {
+      const joaoCasaList = [
+        `<p>Bora parceira, se quiser que eu dê um pulo aí na sua casa é só falar que eu chego em dois palitos!</p>`,
+        `<p>Pode vir aqui também se preferir parceira, fica à vontade! O que for mais fácil pra você!</p>`
+      ];
+      return responseMemory.pick('joao_casa', joaoCasaList);
+    }
+
+    // Risada / Humor
+    if (text.includes('kkk') || text.includes('haha') || text.includes('rsrs') || text.includes('engraçad') || text.includes('engracad') || text.includes('rindo')) {
+      const joaoLaughList = [
+        `<p>Hahaha, boa parceira! Bom demais te ver rindo e de bom humor! 😂👊</p>`,
+        `<p>Kkkk, você não existe parceira! Adoro quando a gente dá risada junto!</p>`
+      ];
+      return responseMemory.pick('joao_laugh', joaoLaughList);
+    }
+
+    // Saudades / Carinho
+    if (text.includes('saudade') || text.includes('saudades') || text.includes('te amo') || text.includes('gosto de você') || text.includes('gosto muito')) {
+      const joaoLoveList = [
+        `<p>Também tava na saudade parceira! Tamo junto demais, você é família pra mim! 👊</p>`,
+        `<p>Pô parceira, consideração máxima por você sempre! Não tem tempo ruim entre nós!</p>`
+      ];
+      return responseMemory.pick('joao_love', joaoLoveList);
+    }
+
     // Cumprimentos
     if (text.includes('tudo bem') || text.includes('tudo bom') || text.includes('como vai') || text.includes('como cê tá')) {
       const fineList = [
@@ -1306,10 +1455,15 @@ function generateSpecializedAIResponse(rawText, persona) {
 
     if (text === 'oi' || text === 'ola' || text === 'olá' || text === 'e ai' || text === 'e aí' || text.startsWith('oi ') || text.startsWith('fala')) {
       const greetList = [
-        `<p>E aí parceira, na paz? Fala comigo, tô na escuta por aqui!</p>`,
+        `<p>E aí parceira, na paz? Fala comigo, tô por aqui! O que manda?</p>`,
         `<p>Fala parceira! Beleza? O que manda aí, tudo tranquilo?</p>`
       ];
       return responseMemory.pick('joao_greet', greetList);
+    }
+
+    // Onde você tá / O que tá fazendo / Rotina
+    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('fazendo o que') || text.includes('tá fazendo') || text.includes('tá em casa') || text.includes('tá livre') || text.includes('tá ocupado')) {
+      return `<p>Tô de boa por aqui parceira, tranquilão! Se você tiver livre a gente pode marcar alguma coisa sim, o que cê acha?</p>`;
     }
 
     // Agradecimento
@@ -1317,11 +1471,17 @@ function generateSpecializedAIResponse(rawText, persona) {
       return `<p>Tamo junto parceira, sempre! Não precisa agradecer não, conta comigo pro que der e vier! 👊</p>`;
     }
 
-    // Genérico
+    // Despedida
+    if (text.includes('tchau') || text.includes('vou dormir') || text.includes('vou sair') || text.includes('depois falo') || text.includes('fui')) {
+      return `<p>Beleza parceira, vai lá! Se cuida bastante e qualquer fita me manda um salve aqui!</p>`;
+    }
+
+    // Genérico (ZERO "tô na escuta")
     const genericList = [
-      `<p>Tô na escuta parceira! Me conta mais aí, o que mais tá pegando?</p>`,
-      `<p>Saquei parceira! E o que você tá pensando em fazer agora? Tô contigo!</p>`,
-      `<p>Pode falar parceira, tô prestando atenção em tudo que você tá falando.</p>`
+      `<p>Saquei parceira! Desenrola aí, me conta mais sobre isso!</p>`,
+      `<p>Tô ligado parceira! E o que você tá pensando em fazer agora?</p>`,
+      `<p>Pode crer parceira, faz todo sentido. Continua falando que eu tô te acompanhando!</p>`,
+      `<p>Mano, tô prestando atenção em tudo que você tá falando. E aí, o que mais rolou?</p>`
     ];
     return responseMemory.pick('joao_generic', genericList);
   }
@@ -1725,27 +1885,95 @@ function generateCallFallbackResponse(rawText, persona) {
       return responseMemory.pick('maria_call_rep', repeatList);
     }
 
-    // 3. Emergência policial / socorro / viatura
+    // 3. Reclamação / "Você não ouviu?" / "Não entendeu?" / "Tô te chamando" / "Tá repetindo"
+    if (text.includes('não ouviu') || text.includes('nao ouviu') || text.includes('não me ouviu') || text.includes('nao me ouviu') || text.includes('não entendeu') || text.includes('nao entendeu') || text.includes('repetindo') || text.includes('mesma coisa') || text.includes('não tá prestando') || text.includes('nao ta prestando') || text.includes('falando que tá') || text.includes('falei pra gente') || text.includes('tô te chamando') || text.includes('to te chamando') || text.includes('me escuta direito')) {
+      const mariaReclamList = [
+        "Ai amiga, me perdoa, me perdi aqui por um segundo! Mas eu ouvi sim, você me chamou pra gente dar uma volta, né? Eu super topo, vamos sim!",
+        "Ai desculpa amiga, me distraí aqui um instantinho! Me perdoa! Pode falar que agora tô 100% ligada em você, bora sair!",
+        "Nossa amiga, desculpa a lerdeza aqui! Mas tô prestando muita atenção agora, vamos combinar esse passeio sim, onde a gente vai?"
+      ];
+      return responseMemory.pick('maria_call_reclam', mariaReclamList);
+    }
+
+    // 4. Convite para sair / rolê / encontrar / dar uma volta / passear
+    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei a maria') || text.includes('rolê') || text.includes('role') || text.includes('dar um role') || text.includes('dar um rolê') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('dar uma volta') || text.includes('espairecer') || text.includes('bater perna')) {
+      const mariaSairList = [
+        "Ai amiga, super topo! Vamos sim, tava doidinha pra sair um pouco de casa e bater papo com você! Onde a gente vai?",
+        "Bora amiga, com certeza! Que delícia de convite! Quer ir no shopping, comer alguma coisa gostosa ou dar uma volta na pracinha?",
+        "Amei a ideia amiga! Vamos sim! Me fala que horas e onde a gente se encontra que eu já começo a me arrumar aqui!",
+        "Super apoio amiga! Tava precisando tanto de um tempo com você pra gente rir e conversar. O que você tá pensando em fazer?",
+        "Bora amiga! Quer tomar um café, um açaí ou comer um lanche gostoso? Escolhe aí que eu tô dentro!"
+      ];
+      return responseMemory.pick('maria_call_sair', mariaSairList);
+    }
+
+    // 5. Comida / Lanche / Açaí / Fome / Restaurante
+    if (text.includes('comer') || text.includes('fome') || text.includes('lanche') || text.includes('hambúrguer') || text.includes('hamburguer') || text.includes('pizza') || text.includes('açaí') || text.includes('acai') || text.includes('café') || text.includes('cafe') || text.includes('docinho') || text.includes('almoçar') || text.includes('almocar') || text.includes('jantar')) {
+      const mariaFoodList = [
+        "Ai amiga, você leu meus pensamentos! Tô louca pra comer um docinho ou um lanche bem gostoso! Onde a gente vai?",
+        "Bora amiga! Um açaí com bastante leite condensado ou um café gostoso, o que você acha?",
+        "Ai que delícia amiga, super topo comer alguma coisa com você! Me fala o que você tá com vontade de comer hoje!"
+      ];
+      return responseMemory.pick('maria_call_food', mariaFoodList);
+    }
+
+    // 6. Tédio / "Tô no tédio" / "Sem nada pra fazer"
+    if (text.includes('tédio') || text.includes('tedio') || text.includes('entediad') || text.includes('à toa') || text.includes('a toa') || text.includes('sem nada pra fazer') || text.includes('de bobeira') || text.includes('nada pra fazer')) {
+      const mariaTedioList = [
+        "Ai amiga, também tava numa preguiça e num tédio aqui... ainda bem que você me chamou! Vamos fazer alguma coisa juntas?",
+        "Tédio é horrível né amiga? Mas agora que a gente tá conversando o astral já melhora! Me conta uma novidade ou vamos dar uma volta!"
+      ];
+      return responseMemory.pick('maria_call_tedio', mariaTedioList);
+    }
+
+    // 7. Casa / Visita / "Vem aqui" / "Posso ir aí"
+    if (text.includes('minha casa') || text.includes('sua casa') || text.includes('aqui em casa') || text.includes('vem aqui') || text.includes('ir aí') || text.includes('ir ai') || text.includes('posso ir') || text.includes('quer vir')) {
+      const mariaCasaList = [
+        "Ai amiga, posso ir aí sim! Se você quiser eu levo alguma coisa pra gente beliscar e papear até tarde!",
+        "Vem aqui em casa amiga! A gente assiste uma série, come alguma coisa e bota todas as fofocas em dia!"
+      ];
+      return responseMemory.pick('maria_call_casa', mariaCasaList);
+    }
+
+    // 8. Risada / Humor
+    if (text.includes('kkk') || text.includes('haha') || text.includes('rsrs') || text.includes('engraçad') || text.includes('engracad') || text.includes('rindo')) {
+      const mariaLaughList = [
+        "Hahaha, ai amiga, eu amo sua risada! Você é maravilhosa, me faz um bem danado!",
+        "Kkkk, tô rindo aqui junto com você amiga! Bom demais conversar contigo!"
+      ];
+      return responseMemory.pick('maria_call_laugh', mariaLaughList);
+    }
+
+    // 9. Saudades / Carinho
+    if (text.includes('saudade') || text.includes('saudades') || text.includes('te amo') || text.includes('gosto de você') || text.includes('gosto muito')) {
+      const mariaLoveList = [
+        "Ai amiga linda, eu também tava morrendo de saudades de você! Te amo tanto, você é muito especial pra mim!",
+        "Nossa amiga, que saudade que eu tava! Meu coração fica quentinho quando a gente se fala!"
+      ];
+      return responseMemory.pick('maria_call_love', mariaLoveList);
+    }
+
+    // 10. Emergência policial / socorro / viatura
     if (text.includes('socorro') || text.includes('perigo') || text.includes('viatura') || text.includes('policia') || text.includes('polícia')) {
       return "Meu Deus amiga, fica calma! Já tô discando pro 190 e a viatura tá indo pro seu local agora! Não sai daí!";
     }
 
-    // 4. Abuso / agressão
+    // 11. Abuso / agressão
     if (text.includes('abusad') || text.includes('abuso') || text.includes('estupr') || text.includes('me bateu') || text.includes('atacou') || text.includes('agarrou')) {
       return "Meu Deus amiga, respira fundo, você não tem culpa de nada! Já tô com o 190 na linha e a viatura tá a caminho, eu não vou desligar até você estar segura!";
     }
 
-    // 5. Perigo na rua / stalker
+    // 12. Perigo na rua / stalker
     if (text.includes('seguindo') || text.includes('estranho') || text.includes('rua escura') || text.includes('suspeito')) {
       return "Amiga, não para! Entra agora no primeiro comércio ou farmácia que você ver e fica perto do balcão! Tô na linha com você!";
     }
 
-    // 6. Medo / Pânico / Ansiedade
+    // 13. Medo / Pânico / Ansiedade
     if (text.includes('medo') || text.includes('pânico') || text.includes('panico') || text.includes('ansied') || text.includes('tremend') || text.includes('falta de ar')) {
       return "Eu tô aqui segurando sua mão amiga. Solta o ar devagarzinho, respira comigo. Me fala onde você tá exatamente pra eu te ajudar!";
     }
 
-    // 7. Sim / Aham / É isso
+    // 14. Sim / Aham / É isso
     if (text === 'sim' || text === 'aham' || text === 'isso' || text === 'é isso' || text === 'tá bom' || text === 'ta bom' || text === 'claro') {
       const yesList = [
         "Entendi perfeitamente amiga! E o que você tá querendo fazer agora? Tô contigo!",
@@ -1755,7 +1983,7 @@ function generateCallFallbackResponse(rawText, persona) {
       return responseMemory.pick('maria_call_yes', yesList);
     }
 
-    // 8. Não / Incerteza / "Não sei"
+    // 15. Não / Incerteza / "Não sei"
     if (text === 'não' || text === 'nao' || text.includes('não sei') || text.includes('nao sei') || text.includes('nem sei')) {
       const noList = [
         "Fica em paz amiga, sem pressão nenhuma. A gente pensa juntas com calma, tá?",
@@ -1765,7 +1993,7 @@ function generateCallFallbackResponse(rawText, persona) {
       return responseMemory.pick('maria_call_no', noList);
     }
 
-    // 9. Cumprimentos
+    // 16. Cumprimentos
     if (text === 'oi' || text === 'olá' || text === 'ola' || text === 'alô' || text === 'alo' || text === 'e aí' || text === 'e ai') {
       const greetList = [
         "Oi amiga! E aí, tudo bem com você? Pode falar, tô aqui na linha te escutando!",
@@ -1775,7 +2003,7 @@ function generateCallFallbackResponse(rawText, persona) {
       return responseMemory.pick('maria_call_greet', greetList);
     }
 
-    // 10. Tudo bem?
+    // 17. Tudo bem?
     if (text.includes('tudo bem') || text.includes('tudo bom') || text.includes('como você tá') || text.includes('como vai')) {
       const fineList = [
         "Tudo certinho por aqui amiga! E com você, como tão as coisas? Deu algum problema ou você queria bater um papo?",
@@ -1785,42 +2013,44 @@ function generateCallFallbackResponse(rawText, persona) {
       return responseMemory.pick('maria_call_fine', fineList);
     }
 
-    // 11. Onde você tá / o que tá fazendo
-    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('onde cê tá') || text.includes('fazendo o que')) {
-      return "Tô em casa amiga, mas se você precisar de mim eu vou correndo aí agora mesmo! Onde você tá?";
+    // 18. Onde você tá / o que tá fazendo
+    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('onde cê tá') || text.includes('fazendo o que') || text.includes('tá livre') || text.includes('tá ocupada')) {
+      return "Tô em casa de boa amiga! Se você quiser que a gente faça alguma coisa ou bater perna, tô super disponível pra você!";
     }
 
-    // 12. Agradecimento
-    if (text.includes('obrigad') || text.includes('valeu') || text.includes('te amo')) {
+    // 19. Agradecimento
+    if (text.includes('obrigad') || text.includes('valeu') || text.includes('obrigada')) {
       return "Imagina amiga, eu tô aqui pro que der e vier! Você nunca tá sozinha, viu?";
     }
 
-    // 13. Despedida
+    // 20. Despedida
     if (text.includes('tchau') || text.includes('desligar') || text.includes('vou desligar') || text.includes('depois falo')) {
       return "Tá bom amiga, se cuida bastante! Qualquer coisa me liga na mesma hora, beijo enorme!";
     }
 
-    // 14. Conversa Geral de Amiga
+    // 21. Conversa Geral de Amiga (ZERO repetições)
     const genList = [
-      "Entendi amiga! Me conta mais sobre isso, tô aqui te ouvindo de verdade.",
-      "Tô prestando atenção em tudo amiga, continua falando comigo.",
-      "Nossa amiga, tô te entendendo perfeitamente. E o que você tá achando de tudo isso?",
-      "Pode falar no seu tempo amiga, não vou sair da linha."
+      "Entendi tudinho amiga! Me conta mais sobre isso, tô aqui te ouvindo de coração aberto.",
+      "Nossa amiga, tô te entendendo perfeitamente! E o que você tá achando de tudo isso?",
+      "Tô prestando atenção em cada detalhe amiga, continua me contando!",
+      "Pode falar no seu tempo amiga, não vou sair da linha. Tô adorando te ouvir."
     ];
     return responseMemory.pick('maria_call_gen', genList);
   }
 
   // === 2. JOÃO (VOZ / VÍDEO) ===
   if (persona === 'joao') {
+    // 1. Dúvida de áudio / escuta na chamada
     if (text.includes('tá me ouvindo') || text.includes('ta me ouvindo') || text.includes('consegue me ouvir') || text.includes('me escuta') || text.includes('tô falando') || text.includes('to falando') || text.includes('alô tá aí')) {
       const audList = [
         "Tô te ouvindo em alto e bom som parceira! Pode falar que o áudio tá 100%!",
-        "Tô na escuta firme parceira! Manda bala, o que houve?",
+        "Tô te ouvindo perfeitamente parceira! Manda bala, o que houve?",
         "Tô aqui na linha te escutando certinho! Pode falar comigo!"
       ];
       return responseMemory.pick('joao_call_aud', audList);
     }
 
+    // 2. Ruído curto / corte / não entendeu
     if (text.length <= 2 || text === 'hã' || text === 'ha' || text === 'ahn' || text === 'hum' || text === 'o que' || text === 'não entendi' || text === 'nao entendi') {
       const repeatList = [
         "Cortou um pouco aqui parceira, manda de novo aí que agora estabilizou!",
@@ -1830,55 +2060,136 @@ function generateCallFallbackResponse(rawText, persona) {
       return responseMemory.pick('joao_call_rep', repeatList);
     }
 
+    // 3. Reclamação / "Você não ouviu?" / "Não entendeu?" / "Tô te chamando" / "Tá repetindo"
+    if (text.includes('não ouviu') || text.includes('nao ouviu') || text.includes('não me ouviu') || text.includes('nao me ouviu') || text.includes('não entendeu') || text.includes('nao entendeu') || text.includes('repetindo') || text.includes('mesma coisa') || text.includes('não tá prestando') || text.includes('nao ta prestando') || text.includes('falando que tá') || text.includes('falei pra gente') || text.includes('tô te chamando') || text.includes('to te chamando') || text.includes('escuta direito') || text.includes('você é burro')) {
+      const joaoReclamList = [
+        "Pode crer parceira, foi mal, me perdi aqui um segundo! Mas tô ligado, você me chamou pra gente sair, né? Bora sim, com certeza! Onde cê quer ir?",
+        "Pô parceira, vacilo meu aqui, desculpa! Ouvi sim, você tava me chamando pra dar um rolê! Demorou, topo na hora, fala onde a gente se encontra!",
+        "Foi mal parceira, viajei na maionese aqui um instante! Mas agora tô focado em você, bora fechar esse rolê com certeza!"
+      ];
+      return responseMemory.pick('joao_call_reclam', joaoReclamList);
+    }
+
+    // 4. Convite para sair / rolê / encontrar / dar uma volta / passear
+    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei o joao') || text.includes('rolê') || text.includes('role') || text.includes('dar um role') || text.includes('dar um rolê') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('dar uma volta') || text.includes('espairecer') || text.includes('bater perna')) {
+      const joaoSairList = [
+        "Bora demais parceira! Fechado! Tava aqui de bobeira mesmo, onde cê quer ir? Shopping, comer alguma coisa ou dar uma volta?",
+        "Demorou parceira, topo na hora! Só me falar o lugar e que horas que eu colo aí contigo!",
+        "Opa, animação total! Vamos sim, tô precisando dar uma espairecida também. O que cê tá a fim de fazer?",
+        "Bora fechar esse rolê agora! Quer tomar um açaí, um lanche ou ir num lugar mais tranquilo? Você manda!",
+        "Com certeza parceira! Me fala onde a gente se encontra que eu já me arrumo aqui pra sair!"
+      ];
+      return responseMemory.pick('joao_call_sair', joaoSairList);
+    }
+
+    // 5. Comida / Lanche / Açaí / Fome / Restaurante
+    if (text.includes('comer') || text.includes('fome') || text.includes('lanche') || text.includes('hambúrguer') || text.includes('hamburguer') || text.includes('pizza') || text.includes('açaí') || text.includes('acai') || text.includes('café') || text.includes('cafe') || text.includes('docinho') || text.includes('almoçar') || text.includes('almocar') || text.includes('jantar')) {
+      const joaoFoodList = [
+        "Nossa parceira, falou de comida é comigo mesmo! Tô com uma fome monstra, bora comer um hambúrguer ou uma pizza?",
+        "Bora tomar um açaí gelado parceira, desce muito bem hoje! Conheço um lugar show por perto!",
+        "Fechou demais parceira, comida boa e resenha, perfeito! O que cê tá com vontade de comer?"
+      ];
+      return responseMemory.pick('joao_call_food', joaoFoodList);
+    }
+
+    // 6. Tédio / "Tô no tédio" / "Sem nada pra fazer"
+    if (text.includes('tédio') || text.includes('tedio') || text.includes('entediad') || text.includes('à toa') || text.includes('a toa') || text.includes('sem nada pra fazer') || text.includes('de bobeira') || text.includes('nada pra fazer')) {
+      const joaoTedioList = [
+        "Puts parceira, tédio é osso mesmo! Mas relaxa que a gente inventa alguma coisa agora pra animar o dia! Quer sair ou prefere só trocar uma ideia?",
+        "Tô ligado parceira, dia parado dá esse tédio mesmo. Bora agitar alguma coisa, me fala o que cê tá a fim de fazer!"
+      ];
+      return responseMemory.pick('joao_call_tedio', joaoTedioList);
+    }
+
+    // 7. Casa / Visita / "Vem aqui" / "Posso ir aí"
+    if (text.includes('minha casa') || text.includes('sua casa') || text.includes('aqui em casa') || text.includes('vem aqui') || text.includes('ir aí') || text.includes('ir ai') || text.includes('posso ir') || text.includes('quer vir')) {
+      const joaoCasaList = [
+        "Bora parceira, se quiser que eu dê um pulo aí na sua casa é só falar que eu chego em dois palitos!",
+        "Pode vir aqui também se preferir parceira, fica à vontade! O que for mais fácil pra você!"
+      ];
+      return responseMemory.pick('joao_call_casa', joaoCasaList);
+    }
+
+    // 8. Risada / Humor
+    if (text.includes('kkk') || text.includes('haha') || text.includes('rsrs') || text.includes('engraçad') || text.includes('engracad') || text.includes('rindo')) {
+      const joaoLaughList = [
+        "Hahaha, boa parceira! Bom demais te ver rindo e de bom humor!",
+        "Kkkk, você não existe parceira! Adoro quando a gente dá risada junto!"
+      ];
+      return responseMemory.pick('joao_call_laugh', joaoLaughList);
+    }
+
+    // 9. Saudades / Carinho
+    if (text.includes('saudade') || text.includes('saudades') || text.includes('te amo') || text.includes('gosto de você') || text.includes('gosto muito')) {
+      const joaoLoveList = [
+        "Também tava na saudade parceira! Tamo junto demais, você é família pra mim!",
+        "Pô parceira, consideração máxima por você sempre! Não tem tempo ruim entre nós!"
+      ];
+      return responseMemory.pick('joao_call_love', joaoLoveList);
+    }
+
+    // 10. Emergência policial / socorro / viatura
     if (text.includes('socorro') || text.includes('perigo') || text.includes('viatura') || text.includes('policia') || text.includes('polícia')) {
       return "Opa, fica firme parceira! Tô contigo na linha, não sai daí que a viatura policial do 190 já foi acionada pro seu ponto!";
     }
 
+    // 11. Abuso / agressão
     if (text.includes('abusad') || text.includes('abuso') || text.includes('estupr') || text.includes('me bateu') || text.includes('atacou')) {
       return "Mano, que covardia! Você não tem culpa de nada disso, fica calma que eu já liguei pro 190 e a viatura tá colando aí agora!";
     }
 
+    // 12. Perigo na rua / stalker
     if (text.includes('seguindo') || text.includes('estranho') || text.includes('rua escura') || text.includes('suspeito')) {
       return "Parceira, não vacila! Entra agora num comércio ou perto de bastante gente! Me manda sua localização que eu já chamo o 190!";
     }
 
+    // 13. Medo / Pânico / Ansiedade
     if (text.includes('medo') || text.includes('pânico') || text.includes('panico') || text.includes('ansied') || text.includes('tremend')) {
       return "Fica calma parceira, respira fundo. Eu tô fechado contigo e nada vai te acontecer. Me diz onde você tá agora.";
     }
 
+    // 14. Sim / Aham / É isso
     if (text === 'sim' || text === 'aham' || text === 'isso' || text === 'é isso' || text === 'tá bom') {
       return "Fechado parceira! E aí, o que você tá pensando em fazer agora? Tô contigo!";
     }
 
+    // 15. Não / Incerteza / "Não sei"
     if (text === 'não' || text === 'nao' || text.includes('não sei') || text.includes('nao sei')) {
       return "Tranquilo parceira, sem crise! A gente desenrola isso junto com calma.";
     }
 
+    // 16. Cumprimentos
     if (text === 'oi' || text === 'olá' || text === 'ola' || text === 'alô' || text === 'alo' || text === 'e aí' || text === 'e ai') {
-      return "E aí parceira, na paz? Fala comigo, tô na escuta aqui na linha!";
+      return "E aí parceira, na paz? Fala comigo, tô por aqui na linha! O que manda?";
     }
 
+    // 17. Tudo bem?
     if (text.includes('tudo bem') || text.includes('tudo bom') || text.includes('como você tá') || text.includes('como vai')) {
       return "Tudo na tranquilidade por aqui! E contigo, tudo certo? Deu alguma treta ou só queria dar um salve?";
     }
 
-    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('onde cê tá')) {
-      return "Tô por perto aqui, se precisar eu dou um pulo aí rapidinho! Onde você tá parada?";
+    // 18. Onde você tá / o que tá fazendo
+    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('onde cê tá') || text.includes('fazendo o que') || text.includes('tá livre') || text.includes('tá ocupado')) {
+      return "Tô de boa por aqui parceira, tranquilão! Se você tiver livre a gente pode marcar alguma coisa sim, o que cê acha?";
     }
 
+    // 19. Agradecimento
     if (text.includes('obrigad') || text.includes('valeu')) {
       return "Tamo junto parceira, sempre! Não precisa agradecer não, conta comigo pro que der e vier.";
     }
 
+    // 20. Despedida
     if (text.includes('tchau') || text.includes('desligar') || text.includes('vou desligar') || text.includes('depois falo')) {
       return "Beleza parceira, fica bem aí! Qualquer fita me dá um toque que eu atendo na hora, fica com Deus!";
     }
 
+    // 21. Genérico do João (ZERO "tô na escuta")
     const genList = [
-      "Tô na escuta parceira! Me fala mais aí, o que tá pegando?",
-      "Saquei parceira! Pode continuar falando, tô prestando atenção.",
-      "Tô contigo parceira! E o que você tá pensando em fazer agora?",
-      "Pode falar no seu ritmo parceira, tô firme na linha."
+      "Saquei parceira! Desenrola aí, me conta mais sobre isso!",
+      "Tô ligado parceira! E o que você tá pensando em fazer agora?",
+      "Pode crer parceira, faz todo sentido. Continua falando que eu tô te acompanhando!",
+      "Mano, tô prestando atenção em tudo que você tá falando. E aí, o que mais rolou?",
+      "Pode falar no seu ritmo parceira! Tô fechado com você, me conta os detalhes."
     ];
     return responseMemory.pick('joao_call_gen', genList);
   }
