@@ -12,16 +12,7 @@
    1. CONFIGURAÇÃO DA API GEMINI & SISTEMA DE MEMÓRIA ANTI-REPETIÇÃO
    ========================================================================== */
 const API_CONFIG = {
-  get apiKey() {
-    return localStorage.getItem('ponto_seguro_gemini_key') || "";
-  },
-  set apiKey(val) {
-    if (val && val.trim()) {
-      localStorage.setItem('ponto_seguro_gemini_key', val.trim());
-    } else {
-      localStorage.removeItem('ponto_seguro_gemini_key');
-    }
-  },
+  apiKey: "AQ.Ab8RN6JKvt6xTFeSJps3pASs3C80afwxrjVm_sKXUYHgkJrMww",
   primaryModel: "gemini-2.0-flash",
   fallbackModel: "gemini-1.5-flash",
   endpointBase: "https://generativelanguage.googleapis.com/v1beta/models",
@@ -325,7 +316,10 @@ async function requestGeminiText(contents, systemText, maxTokens = 1000) {
       const url = `${API_CONFIG.endpointBase}/${model}:generateContent?key=${apiKey}`;
       const response = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey
+        },
         body: JSON.stringify(payload),
         signal: controller.signal
       });
@@ -420,128 +414,6 @@ const userLocation = {
 };
 
 /* ==========================================================================
-   CONFIGURAÇÃO & MODAL DA INTELIGÊNCIA ARTIFICIAL (GEMINI)
-   ========================================================================== */
-function openAISettingsModal() {
-  const modal = document.getElementById('aiSettingsModal');
-  if (modal) modal.style.display = 'flex';
-  const input = document.getElementById('geminiApiKeyInput');
-  if (input) input.value = API_CONFIG.apiKey;
-  updateAIStatusUI();
-}
-
-function closeAISettingsModal() {
-  const modal = document.getElementById('aiSettingsModal');
-  if (modal) modal.style.display = 'none';
-}
-
-function updateAIStatusUI(isConnected = null) {
-  const badge = document.getElementById('aiStatusBadge');
-  const btn = document.getElementById('btnAiConfig');
-  const dot = document.getElementById('aiStatusDot');
-  const card = document.getElementById('aiStatusCard');
-  const title = document.getElementById('aiStatusTitle');
-  const desc = document.getElementById('aiStatusDesc');
-
-  const hasKey = !!API_CONFIG.apiKey;
-
-  if (isConnected === true || (isConnected === null && hasKey)) {
-    if (badge) badge.innerText = "IA Gemini (Online)";
-    if (btn) btn.classList.add('is-connected');
-    if (card) {
-      card.className = 'ai-status-card status-connected';
-    }
-    if (title) title.innerText = "🟢 Google Gemini Conectado (Nuvem Ativa)";
-    if (desc) desc.innerText = "Suas conversas e chamadas estão sendo processadas em tempo real com os modelos oficiais do Google Gemini.";
-  } else {
-    if (badge) badge.innerText = "Motor Local Ativo";
-    if (btn) btn.classList.remove('is-connected');
-    if (card) {
-      card.className = 'ai-status-card status-local';
-    }
-    if (title) title.innerText = "🔵 Motor Neural Local Ativo (100% Funcional)";
-    if (desc) desc.innerText = "Respostas humanas, fluidas e sem repetição geradas com privacidade total no seu dispositivo.";
-  }
-}
-
-function toggleApiKeyVisibility() {
-  const input = document.getElementById('geminiApiKeyInput');
-  const btn = document.getElementById('btnToggleEye');
-  if (!input) return;
-  if (input.type === 'password') {
-    input.type = 'text';
-    if (btn) btn.innerText = '🙈';
-  } else {
-    input.type = 'password';
-    if (btn) btn.innerText = '👁️';
-  }
-}
-
-async function testAndSaveGeminiKey() {
-  const input = document.getElementById('geminiApiKeyInput');
-  const btn = document.getElementById('btnTestSaveAiKey');
-  if (!input) return;
-
-  const key = input.value.trim();
-  if (!key) {
-    clearGeminiApiKey();
-    return;
-  }
-
-  if (btn) {
-    btn.disabled = true;
-    btn.innerText = "Testando conexão...";
-  }
-
-  try {
-    const testPayload = {
-      contents: [{ role: "user", parts: [{ text: "ping" }] }],
-      generationConfig: { maxOutputTokens: 5 }
-    };
-
-    const url = `${API_CONFIG.endpointBase}/${API_CONFIG.primaryModel}:generateContent?key=${key}`;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(testPayload),
-      signal: controller.signal
-    });
-    clearTimeout(timeout);
-
-    if (res.ok) {
-      API_CONFIG.apiKey = key;
-      updateAIStatusUI(true);
-      showToast("✨ Conexão com Google Gemini realizada com sucesso!");
-      setTimeout(() => closeAISettingsModal(), 800);
-    } else {
-      const err = await res.json().catch(() => ({}));
-      const msg = err.error?.message || "Chave inválida ou não autorizada pelo Google.";
-      showToast(`⚠️ Falha na API: ${msg}`);
-      updateAIStatusUI(false);
-    }
-  } catch (err) {
-    showToast("⚠️ Não foi possível conectar ao Google. Verifique a chave e a internet.");
-    updateAIStatusUI(false);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerText = "Testar e Salvar Conexão";
-    }
-  }
-}
-
-function clearGeminiApiKey() {
-  API_CONFIG.apiKey = "";
-  const input = document.getElementById('geminiApiKeyInput');
-  if (input) input.value = "";
-  updateAIStatusUI(false);
-  showToast("Chave removida. Motor Neural Local reativado.");
-}
-
-/* ==========================================================================
    3. INICIALIZAÇÃO DO APP
    ========================================================================== */
 document.addEventListener('DOMContentLoaded', () => {
@@ -551,7 +423,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initRealLocationDetection();
   updateTopFriendDisplay();
   updateQuickChipsForChannel(appState.selectedPersona);
-  updateAIStatusUI();
   initChatForActiveFriend();
 });
 

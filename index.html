@@ -209,12 +209,6 @@
         </div>
 
         <div class="top-header-right">
-          <!-- Botão Configurar IA / Status -->
-          <button class="btn-call-mode btn-ai-config" id="btnAiConfig" onclick="openAISettingsModal()" title="Status da Conexão e Chave da IA Gemini">
-            <span class="icon">✨</span>
-            <span class="btn-label" id="aiStatusBadge">IA Gemini</span>
-          </button>
-
           <!-- Botão Fazer Ligação de Voz -->
           <button class="btn-call-mode" id="topCallBtn" onclick="handleTopCallClick()" title="Fazer ligação">
             <span class="icon" id="topCallIcon">📞</span>
@@ -450,61 +444,6 @@
     </div>
   </div>
 
-  <!-- ====================================================================
-       MODAL: CONFIGURAÇÃO E STATUS DA INTELIGÊNCIA ARTIFICIAL (GEMINI)
-       ==================================================================== -->
-  <div class="call-modal-overlay" id="aiSettingsModal" style="display: none;">
-    <div class="ai-config-modal-card">
-      <div class="ai-modal-header">
-        <div class="ai-header-title">
-          <span class="ai-sparkle-icon">✨</span>
-          <h3>Inteligência Artificial (Google Gemini)</h3>
-        </div>
-        <button class="ai-modal-close-btn" onclick="closeAISettingsModal()" title="Fechar janela">✕</button>
-      </div>
-
-      <div class="ai-modal-body">
-        <div class="ai-status-card" id="aiStatusCard">
-          <div class="ai-status-indicator-dot" id="aiStatusDot"></div>
-          <div class="ai-status-texts">
-            <h4 id="aiStatusTitle">Verificando status da IA...</h4>
-            <p id="aiStatusDesc">Carregando parâmetros...</p>
-          </div>
-        </div>
-
-        <div class="ai-field-group">
-          <label for="geminiApiKeyInput">Chave de API do Google Gemini (Opcional):</label>
-          <div class="ai-input-row">
-            <input type="password" id="geminiApiKeyInput" placeholder="Ex: AIzaSyD..." autocomplete="off">
-            <button type="button" class="btn-toggle-eye" onclick="toggleApiKeyVisibility()" id="btnToggleEye" title="Mostrar/ocultar chave">👁️</button>
-          </div>
-          <small class="ai-hint">
-            Obtenha sua chave gratuita em menos de 1 minuto no <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio ↗</a>.
-          </small>
-        </div>
-
-        <div class="ai-features-box">
-          <div class="ai-feat-item">
-            <span class="feat-icon">💬</span>
-            <div><strong>Chat Ultra-Fluido:</strong> Conversas dinâmicas, acolhedoras e naturais para todos os 6 canais.</div>
-          </div>
-          <div class="ai-feat-item">
-            <span class="feat-icon">🎙️</span>
-            <div><strong>Chamadas de Voz & Vídeo:</strong> Maria e João atendem como amigos reais, com escuta atenta no microfone.</div>
-          </div>
-          <div class="ai-feat-item">
-            <span class="feat-icon">🛡️</span>
-            <div><strong>Modo de Contingência 100% Offline:</strong> Mesmo sem chave ou internet, o sistema responde fluidamente sem travar nem repetir frases.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="ai-modal-footer">
-        <button type="button" class="btn-ai-secondary" onclick="clearGeminiApiKey()">Remover Chave</button>
-        <button type="button" class="btn-ai-primary" id="btnTestSaveAiKey" onclick="testAndSaveGeminiKey()">Testar e Salvar Conexão</button>
-      </div>
-    </div>
-  </div>
 
   <!-- TOAST DE NOTIFICAÇÃO -->
   <div id="toastNotification" class="toast-notification" role="status" aria-live="polite"></div>
