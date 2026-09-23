@@ -1415,3 +1415,339 @@ body.theme-dark .dispatch-alert-card {
     padding: 8px 12px 14px 12px;
   }
 }
+
+/* ==========================================================================
+   COMPONENTES INTERATIVOS DE ALTA IMERSÃO NOS CHATS
+   ========================================================================== */
+
+/* 1. Player de Áudio de Voz Estilo WhatsApp / Telegram */
+.voice-note-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(245, 237, 228, 0.7);
+  border: 1px solid var(--sidebar-border);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  margin-top: 10px;
+  max-width: 380px;
+  transition: var(--transition-smooth);
+}
+
+body.theme-dark .voice-note-player {
+  background: rgba(28, 36, 25, 0.85);
+  border-color: var(--border-subtle);
+}
+
+.voice-note-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-terracotta);
+  color: #FFFFFF;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(201, 123, 91, 0.35);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.voice-note-btn:hover {
+  background: var(--color-terracotta-hover);
+  transform: scale(1.05);
+}
+
+.voice-note-btn.playing {
+  background: var(--color-olive);
+  animation: pulseButton 1.5s infinite;
+}
+
+@keyframes pulseButton {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+.voice-note-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.voice-note-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.voice-waveform {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 22px;
+  padding: 2px 0;
+}
+
+.voice-bar {
+  width: 3px;
+  background: var(--color-sage);
+  border-radius: 2px;
+  height: 35%;
+  transition: height 0.15s ease, background 0.2s ease;
+}
+
+.voice-note-player.is-playing .voice-bar {
+  background: var(--color-terracotta);
+  animation: waveAnim 1s ease-in-out infinite alternate;
+}
+
+.voice-note-player.is-playing .voice-bar:nth-child(2) { animation-delay: 0.1s; }
+.voice-note-player.is-playing .voice-bar:nth-child(3) { animation-delay: 0.25s; }
+.voice-note-player.is-playing .voice-bar:nth-child(4) { animation-delay: 0.15s; }
+.voice-note-player.is-playing .voice-bar:nth-child(5) { animation-delay: 0.35s; }
+.voice-note-player.is-playing .voice-bar:nth-child(6) { animation-delay: 0.05s; }
+.voice-note-player.is-playing .voice-bar:nth-child(7) { animation-delay: 0.2s; }
+.voice-note-player.is-playing .voice-bar:nth-child(8) { animation-delay: 0.3s; }
+.voice-note-player.is-playing .voice-bar:nth-child(9) { animation-delay: 0.12s; }
+.voice-note-player.is-playing .voice-bar:nth-child(10) { animation-delay: 0.28s; }
+.voice-note-player.is-playing .voice-bar:nth-child(11) { animation-delay: 0.18s; }
+.voice-note-player.is-playing .voice-bar:nth-child(12) { animation-delay: 0.32s; }
+
+@keyframes waveAnim {
+  0% { height: 20%; }
+  50% { height: 95%; }
+  100% { height: 35%; }
+}
+
+/* 2. Card Interativo de Exercício de Respiração 4-7-8 */
+.breathing-card {
+  background: linear-gradient(145deg, #F5EDE4, #EAE0D5);
+  border: 1.5px solid var(--color-sage);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin: 12px 0 6px 0;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(62, 74, 52, 0.06);
+}
+
+body.theme-dark .breathing-card {
+  background: linear-gradient(145deg, #232C20, #1B2319);
+  border-color: var(--color-sage);
+}
+
+.breathing-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-olive-dark);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+body.theme-dark .breathing-title {
+  color: #E8EDE4;
+}
+
+.breathing-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.breathing-circle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 14px 0;
+}
+
+.breathing-circle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--color-peach), var(--color-sage));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-olive-dark);
+  font-weight: 700;
+  font-size: 0.85rem;
+  box-shadow: 0 0 20px rgba(167, 180, 154, 0.4);
+  transition: transform 4s ease-in-out, background 1s ease;
+}
+
+.breathing-circle.inhale {
+  transform: scale(1.4);
+  background: radial-gradient(circle, #DCE3D6, var(--color-sage));
+}
+
+.breathing-circle.hold {
+  transform: scale(1.4);
+  background: radial-gradient(circle, #FDE68A, #F59E0B);
+}
+
+.breathing-circle.exhale {
+  transform: scale(1);
+  background: radial-gradient(circle, var(--color-peach), var(--color-terracotta));
+}
+
+.breathing-action-btn {
+  background: var(--color-olive);
+  color: #FFFFFF;
+  border: none;
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.breathing-action-btn:hover {
+  background: var(--color-olive-dark);
+  transform: translateY(-1px);
+}
+
+/* 3. Card Tático COPOM 190 */
+.copom-tactical-card {
+  background: #FFF5F5;
+  border: 1.5px solid #F87171;
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin: 10px 0;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.1);
+}
+
+body.theme-dark .copom-tactical-card {
+  background: #2A1818;
+  border-color: #EF4444;
+}
+
+.copom-tactical-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px dashed rgba(239, 68, 68, 0.35);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.copom-badge {
+  background: #EF4444;
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.copom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 0.82rem;
+  margin-bottom: 10px;
+}
+
+.copom-grid-item {
+  background: rgba(255, 255, 255, 0.6);
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+body.theme-dark .copom-grid-item {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.copom-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  display: block;
+}
+
+.copom-val {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* 4. Card Clínico SAMU 192 PEP */
+.samu-pep-card {
+  background: #F0FDF4;
+  border: 1.5px solid #86EFAC;
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin: 10px 0;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.08);
+}
+
+body.theme-dark .samu-pep-card {
+  background: #152718;
+  border-color: #22C55E;
+}
+
+.samu-pep-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #166534;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+body.theme-dark .samu-pep-header {
+  color: #86EFAC;
+}
+
+.samu-pep-body {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-main);
+}
+
+/* 5. Mini Reações em Balões de Mensagem */
+.msg-reactions-bar {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  align-items: center;
+}
+
+.reaction-btn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 3px 8px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--text-muted);
+}
+
+.reaction-btn:hover {
+  background: var(--color-sage-light);
+  transform: scale(1.1);
+  color: var(--text-main);
+}
+
+.reaction-btn.reacted {
+  background: var(--color-peach);
+  border-color: var(--color-terracotta);
+  color: var(--color-olive-dark);
+  font-weight: 700;
+}

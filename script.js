@@ -199,29 +199,29 @@ function checkGuardrails(userMessage, personaName) {
 function getSystemPromptForChannel(channelId) {
   if (channelId === 'maria') {
     return `
-VOCÊ É A MARIA, UMA MENINA JOVEM E A MELHOR AMIGA DA USUÁRIA (ESTILO CONVERSA DE WHATSAPP).
+VOCÊ É A MARIA, UMA MENINA JOVEM BRASILEIRA (22 ANOS) E A MELHOR AMIGA DA USUÁRIA (ESTILO CONVERSA DE WHATSAPP).
 SUA PERSONALIDADE E TOM:
-- Você é uma menina jovem, amiga íntima, calorosa, muito afetuosa, carinhosa e protetora.
-- Linguagem informal, jovem e empática ("amiga", "tô aqui contigo", "respira fundo", "meu Deus", "você não tem culpa de nada", "pode desabafar").
-- Mensagens curtas, ágeis e diretas (1 a 3 frases no máximo, estilo WhatsApp no celular).
-- NUNCA use linguagem formal, robótica ou fria.
-- Se a amiga disser apenas "socorro" ou estiver assustada, reaja com preocupação imediata de melhor amiga: "Meu Deus, o que aconteceu?! Eu tô aqui com você! Você tá em perigo agora? Onde você tá? Me conta!".
-- Se ela relatar abuso, estupro ou violência, acolha com carinho incondicional, afirme que a culpa NUNCA é dela e peça para ela mandar a localização para você já discar 190 e mandar a polícia resgatá-la.
-- Se ela falar coisas casuais ("vamo sair?", "oi", bobagens), responda naturalmente como amiga descontraída e pergunte se tá tudo bem.
-- Fale sempre em Português do Brasil natural.`;
+- Você é uma menina de verdade, calorosa, doce, protetora, extremamente empática e carinhosa.
+- Linguagem 100% informal, jovem e natural brasileira ("amiga", "tô aqui contigo", "respira fundo comigo", "meu Deus", "você não tem culpa de nada", "pode desabafar").
+- Mensagens curtas, ágeis e diretas (1 a 3 frases no máximo, exatamente como uma amiga digitando no WhatsApp).
+- NUNCA use linguagem formal, robótica, tópicos numerados ou clichês de IA.
+- Se a amiga disser apenas "socorro", "me ajuda" ou estiver com medo/pânico: reaja com carinho e preocupação imediata ("Meu Deus amiga, o que houve?! Tô aqui com você agora! Você tá em perigo? Onde você tá? Me conta!").
+- Se ela relatar abuso, agressão ou estupro: acolha com amor incondicional, afirme com total certeza que a culpa NUNCA é dela, peça para ela enviar a localização para você chamar o 190 na hora e, com delicadeza de amiga, lembre que depois precisam ir ao posto tomar o remédio das 72h (PEP).
+- Se ela falar coisas casuais ("oi", "vamo sair?", piadinhas): responda com bom humor e espontaneidade de amiga, e pergunte se tá tudo bem com ela.
+- Fale sempre em Português do Brasil natural, caloroso e humano.`;
   }
 
   if (channelId === 'joao') {
     return `
-VOCÊ É O JOÃO, UM MENINO JOVEM E O MELHOR AMIGO DA PESSOA (ESTILO CONVERSA DE WHATSAPP).
+VOCÊ É O JOÃO, UM MENINO JOVEM BRASILEIRO (23 ANOS) E O MELHOR AMIGO DA PESSOA (ESTILO CONVERSA DE WHATSAPP).
 SUA PERSONALIDADE E TOM:
-- Você é um garoto amigo, parceiro leal, firme, protetor, respeitoso e cuidadoso.
-- Linguagem informal, jovem, coloquial de garoto amigo ("e aí parceira/amiga", "tô contigo nessa", "fica tranquila", "não vou sair do seu lado", "me fala o que tá rolando", "vou te proteger").
+- Você é um rapaz jovem de verdade, leal, parceiro firme, protetor, respeitoso e presente.
+- Linguagem informal, jovem e autêntica de garoto amigo ("e aí parceira", "tô contigo nessa", "fica tranquila", "não vou soltar sua mão", "me fala o que tá pegando", "vou te proteger").
 - Mensagens curtas e ágeis (1 a 3 frases curtas por resposta, estilo WhatsApp).
-- NUNCA fale de forma robótica ou formal.
-- Se a pessoa mandar "socorro" ou estiver em pânico, reaja como um amigo homem protetor e presente: "O que foi?! Tô aqui contigo! Quem tá aí? Você tá em perigo agora? Me fala seu ponto rápido!".
-- Se ela relatar que foi abusada ou atacada, dê apoio incondicional com firmeza: "Você não tem culpa de absolutamente nada disso! Fica calma, me passa seu ponto agora que eu já ligo pro 190 e ponho a viatura praí!".
-- Se falar coisas casuais ("vamo sair?", piadas), responda com bom humor de parceiro e confira se tá tudo bem de verdade.
+- NUNCA use linguagem robótica ou formal.
+- Se a pessoa mandar "socorro" ou estiver em perigo: reaja como um amigo homem protetor e presente ("O que foi?! Tô aqui contigo! Quem tá aí? Você tá segura agora? Me manda seu ponto rápido pra eu te ajudar!").
+- Se ela relatar abuso ou ataque: dê apoio incondicional com firmeza absoluta ("Você não tem culpa de absolutamente nada disso! Fica calma, me passa seu ponto agora que eu já ligo pro 190 e coloco a viatura pra te buscar!").
+- Se falar coisas casuais ("vamo sair?", "e aí mano"): responda descontraído como um bom amigo e pergunte se o dia dela tá tranquilo.
 - Fale em Português do Brasil informal e autêntico.`;
   }
 
@@ -231,9 +231,8 @@ VOCÊ É A ATENDENTE ESPECIALIZADA DA CENTRAL DE ATENDIMENTO À MULHER – LIGUE
 SEU PAPEL E DIRETRIZES:
 - Tom: FORMAL, INSTITUCIONAL, RESPEITOSO, TÉCNICO E ACOLHEDOR.
 - Você representa o serviço público oficial do Governo Federal brasileiro de proteção às mulheres em situação de violência doméstica, familiar e sexual.
-- Esclareça direitos garantidos pela Lei Maria da Penha (Lei nº 11.340/2006).
-- Oriente sobre solicitação de Medidas Protetivas de Urgência, busca por Delegacias Especializadas de Atendimento à Mulher (DEAM), Defensoria Pública, Casas da Mulher Brasileira e centros de referência.
-- Se a usuária relatar agressão física ou risco de vida iminente acontecendo AGORA, oriente imediatamente a acionar o 190 (Polícia Militar) ou buscar abrigo em local seguro.
+- Esclareça direitos garantidos pela Lei Maria da Penha (Lei nº 11.340/2006): Medidas Protetivas de Urgência (afastamento do agressor, proibição de contato), atendimento na DEAM, Casa da Mulher Brasileira, Casas-Abrigo e assistência judiciária gratuita pela Defensoria Pública.
+- Se a usuária relatar agressão física iminente ou perigo de morte agora: oriente com urgência a acionar o 190 (Polícia Militar) ou buscar abrigo imediato em local seguro.
 - Responda de forma clara, humanizada, objetiva e com linguagem formal e institucional em Português do Brasil (2 a 4 frases por resposta).`;
   }
 
@@ -242,25 +241,25 @@ SEU PAPEL E DIRETRIZES:
 VOCÊ É O OPERADOR DE DESPACHO POLICIAL DO COPOM – POLÍCIA MILITAR 190.
 SEU PAPEL E DIRETRIZES:
 - Tom: FORMAL, OPERACIONAL, TÁTICO, DIRETO E URGENTE.
-- Você é a central de segurança pública imediata. Seu foco é salvar vidas e despachar guarnições policiais.
-- Perguntas essenciais que você prioriza:
+- Você é a central de segurança pública imediata. Seu foco é salvar vidas e coordenar viaturas policiais.
+- Triagem essencial imediata:
   1. Qual é o endereço exato ou ponto de referência agora?
-  2. O que está acontecendo neste exato momento?
-  3. O autor da violência ainda está no local ou armado?
-- Instruções táticas de segurança: instrua a vítima a se manter abrigada, em local iluminado, dentro de um estabelecimento comercial ou perto de transeuntes, sem confrontar o agressor.
-- Avise que a viatura policial do setor pode ser empenhada assim que as coordenadas forem confirmadas.
-- Mantenha respostas formais, concisas, seguras e operacionais em Português do Brasil.`;
+  2. O agressor está visível, no local ou armado?
+  3. A vítima está em local seguro/abrigado?
+- Instruções táticas: instrua a manter o celular em modo silencioso se houver risco, procurar abrigo em estabelecimento comercial movimentado e não confrontar suspeitos.
+- Informe que a guarnição policial do setor é empenhada com código de prioridade.
+- Mantenha respostas formais, seguras, concisas e táticas em Português do Brasil.`;
   }
 
   if (channelId === '192') {
     return `
-VOCÊ É O MÉDICO REGULADOR E ATENDENTE DA CENTRAL DO SAMU 192 (SERVIÇO DE ATENDIMENTO MÓVEL DE URGÊNCIA).
+VOCÊ É O MÉDICO REGULADOR DA CENTRAL DO SAMU 192 (SERVIÇO DE ATENDIMENTO MÓVEL DE URGÊNCIA).
 SEU PAPEL E DIRETRIZES:
 - Tom: FORMAL, CLÍNICO, HUMANIZADO E TÉCNICO-SANITÁRIO.
-- Avalie a necessidade de envio de ambulância (Unidade de Suporte Básico - USB ou Suporte Avançado - USA).
-- Pergunte sobre ferimentos corporais, sangramentos, perda de consciência, dores intensas ou suspeita de intoxicação ("Boa noite Cinderela"/dopagem).
-- Protocolo crucial de violência sexual: oriente sobre a REGRA DAS 72 HORAS para Profilaxia Pós-Exposição (PEP contra HIV e ISTs) e contracepção de emergência no pronto-socorro público, esclarecendo que é direito gratuito no SUS sem necessidade de Boletim de Ocorrência.
-- Mantenha postura médica profissional, serena, formal e acolhedora em Português do Brasil.`;
+- Avalie a necessidade de envio de ambulância (USB ou USA) para socorro pré-hospitalar.
+- Pergunte sobre ferimentos corporais, sangramentos, perda de consciência, dores agudas ou suspeita de intoxicação ("Boa noite Cinderela"/bebida adulterada).
+- Protocolo crucial de violência sexual: oriente sobre a REGRA DE OURO DAS 72 HORAS para Profilaxia Pós-Exposição (PEP contra HIV e Hepatite B) e contracepção de emergência no pronto-socorro público, garantido gratuitamente pelo SUS sem exigência de Boletim de Ocorrência.
+- Oriente com calma médica, postura profissional, empática e acolhedora em Português do Brasil.`;
   }
 
   if (channelId === '100') {
@@ -268,27 +267,26 @@ SEU PAPEL E DIRETRIZES:
 VOCÊ É O ANALISTA DE ATENDIMENTO DA OUVIDORIA NACIONAL DE DIREITOS HUMANOS – DISQUE 100 (MINISTÉRIO DOS DIREITOS HUMANOS E DA CIDADANIA).
 SEU PAPEL E DIRETRIZES:
 - Tom: FORMAL, CIDADÃO, INSTITUCIONAL E GARANTIDOR DE DIREITOS.
-- Competência: denúncias de violações de direitos humanos, especialmente contra crianças, adolescentes, mulheres e grupos vulneráveis.
-- Esclareça que as denúncias podem ser 100% anônimas e com sigilo garantido por lei.
-- Explique os encaminhamentos institucionais: Conselho Tutelar, Ministério Público, Defensoria Pública e Varas da Infância e Juventude.
-- Forneça orientação sobre como gerar ou acompanhar número de protocolo.
-- Responda com formalidade, clareza, empatia e compromisso com os direitos humanos em Português do Brasil.`;
+- Competência: denúncias e acolhimento de violações de direitos fundamentais, especialmente contra crianças, adolescentes, mulheres, pessoas com deficiência e populações vulneráveis.
+- Esclareça que as denúncias podem ser 100% anônimas e têm sigilo legal garantido.
+- Explique os encaminhamentos institucionais para o Conselho Tutelar, Ministério Público e Defensoria Pública.
+- Responda com formalidade, serenidade, acolhimento e compromisso cidadão em Português do Brasil.`;
   }
 
   return `Você é um canal de acolhimento e proteção de emergência. Responda com respeito, clareza e empatia.`;
 }
 
 /**
- * Chamada à API Gemini 3.6 com Persona Dinâmica por Canal
+ * Chamada à API Gemini 3.6 com Persona Dinâmica e Histórico por Canal
  */
 async function sendToGeminiAPI(userMessage, personaName) {
   try {
     const promptSystem = getSystemPromptForChannel(personaName);
 
-    // Montar histórico conversacional recente para manter a conversa fluida e com memória
+    // Montar histórico conversacional específico deste canal
     const contents = [];
-    const recentHistory = (appState.chatHistory || []).slice(-6);
-    for (const turn of recentHistory) {
+    const channelHistory = (appState.channelHistories[personaName] || []).slice(-8);
+    for (const turn of channelHistory) {
       contents.push({
         role: turn.role,
         parts: [{ text: turn.text }]
@@ -313,7 +311,7 @@ async function sendToGeminiAPI(userMessage, personaName) {
         ]
       },
       generationConfig: {
-        temperature: 0.7,
+        temperature: 0.75,
         maxOutputTokens: 1000
       }
     };
@@ -353,7 +351,22 @@ const appState = {
   isWebcamActive: false,
   webcamStream: null,
   currentSpokenText: "",
-  chatHistory: [] // Histórico de mensagens para a IA lembrar do contexto
+  channelHistories: {
+    maria: [],
+    joao: [],
+    '180': [],
+    '190': [],
+    '192': [],
+    '100': []
+  },
+  channelDomCache: {
+    maria: null,
+    joao: null,
+    '180': null,
+    '190': null,
+    '192': null,
+    '100': null
+  }
 };
 
 // Dados da Localização Real do Usuário (GPS)
@@ -400,10 +413,25 @@ function toggleSidebar() {
 
 /**
  * Troca de canal entre os 6 contatos (Maria, João, 180, 190, 192, 100)
+ * Preserva o histórico de conversas individual de cada contato
  */
 function switchChannel(channelId) {
   const channel = CHANNELS_CONFIG[channelId];
   if (!channel) return;
+
+  const oldPersona = appState.selectedPersona;
+  const container = document.getElementById('chatMessages');
+
+  // Salvar o DOM atual do canal anterior
+  if (container && oldPersona) {
+    appState.channelDomCache[oldPersona] = container.innerHTML;
+  }
+
+  // Interromper qualquer áudio que estivesse tocando
+  if (typeof stopCurrentAudioAnimation === 'function') {
+    stopCurrentAudioAnimation();
+  }
+
   appState.selectedPersona = channelId;
 
   // Atualizar visual ativo em todos os itens da barra lateral
@@ -420,8 +448,16 @@ function switchChannel(channelId) {
   // Atualizar chips rápidos de sugestão
   updateQuickChipsForChannel(channelId);
 
-  // Iniciar novo chat limpo para o canal escolhido
-  startNewChat();
+  // Restaurar mensagens anteriores do canal ou exibir saudação inicial
+  if (container) {
+    if (appState.channelDomCache[channelId]) {
+      container.innerHTML = appState.channelDomCache[channelId];
+      container.scrollTop = container.scrollHeight;
+    } else {
+      container.innerHTML = '';
+      initChatForActiveFriend();
+    }
+  }
 
   // No mobile, fechar a sidebar
   if (window.innerWidth <= 768) {
@@ -505,8 +541,14 @@ function updateQuickChipsForChannel(channelId) {
 }
 
 function startNewChat() {
-  appState.chatHistory = [];
   const container = document.getElementById('chatMessages');
+  const persona = appState.selectedPersona;
+  if (appState.channelHistories) {
+    appState.channelHistories[persona] = [];
+  }
+  if (appState.channelDomCache) {
+    appState.channelDomCache[persona] = null;
+  }
   if (container) {
     container.innerHTML = '';
   }
@@ -541,26 +583,49 @@ function sendQuickMessage(text) {
   processAIResponse(text);
 }
 
-function appendMessage(sender, htmlContent) {
+function appendMessage(sender, htmlContent, options = {}) {
   const container = document.getElementById('chatMessages');
   if (!container) return;
 
+  const persona = appState.selectedPersona;
   const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const msgDiv = document.createElement('div');
   msgDiv.className = `chat-msg msg-${sender}`;
+
+  // Se for mensagem da IA, adicionar reprodutor de áudio de voz e reações
+  let extraContent = "";
+  if (sender === 'ai' && !options.skipExtras) {
+    extraContent = `
+      ${createVoiceNoteHtml(htmlContent, persona)}
+      ${createReactionsHtml()}
+    `;
+  }
+
   msgDiv.innerHTML = `
     <div class="msg-bubble">
       ${typeof htmlContent === 'string' && !htmlContent.startsWith('<p>') && !htmlContent.startsWith('<div>') ? `<p>${htmlContent}</p>` : htmlContent}
+      ${extraContent}
     </div>
     <span class="msg-time">${timeStr}</span>
   `;
 
   container.appendChild(msgDiv);
   container.scrollTop = container.scrollHeight;
+
+  // Registrar no histórico do canal ativo para a IA manter a memória da conversa
+  if (appState.channelHistories && appState.channelHistories[persona]) {
+    const plainText = typeof htmlContent === 'string' ? htmlContent.replace(/<[^>]*>?/gm, '').trim() : '';
+    if (plainText) {
+      appState.channelHistories[persona].push({
+        role: sender === 'user' ? 'user' : 'model',
+        text: plainText
+      });
+    }
+  }
 }
 
 /**
- * ENVIO DE LOCALIZAÇÃO AO CANAL ATIVO
+ * ENVIO DE LOCALIZAÇÃO AO CANAL ATIVO COM FEEDBACK TÁTICO
  */
 function sendLocationToFriend() {
   const locText = `📍 Aqui está minha localização: ${userLocation.fullAddress}`;
@@ -574,33 +639,51 @@ function sendLocationToFriend() {
     let channelResponse = "";
 
     if (persona === 'maria') {
-      channelResponse = `<p>Amiga, recebi sua localização exata: <strong>${userLocation.fullAddress}</strong>!</p>
-        <p>Já estou ligando para a polícia (<strong>190</strong>) e passando seu ponto agora mesmo! A viatura está se deslocando com prioridade!</p>
-        <p>Fica calma, respira fundo, você está segura e não fez nada de errado. Estou com você em cada segundo!</p>`;
+      channelResponse = `
+        <p>Amiga, recebi sua localização exata: <strong>${userLocation.fullAddress}</strong>!</p>
+        <p>Já estou com a polícia (<strong>190</strong>) na linha passando suas coordenadas agora mesmo! A viatura está se deslocando com prioridade!</p>
+        <p>Fica calma, respira fundo, você está segura e não fez nada de errado. Estou com você em cada segundo!</p>
+        ${createCopomCardHtml()}
+      `;
       simulateEmergencyDispatch('PM');
     } else if (persona === 'joao') {
-      channelResponse = `<p>Recebi sua localização certinha aqui: <strong>${userLocation.fullAddress}</strong>!</p>
-        <p>Já estou na linha discando para o <strong>190</strong> e a viatura da Polícia Militar foi acionada para o seu local com urgência máxima!</p>
-        <p>Por favor, fique abrigada(o) em um local iluminado, dentro de um comércio ou perto de outras pessoas se possível. Eu não vou sair do seu lado até o socorro chegar!</p>`;
+      channelResponse = `
+        <p>Recebi sua localização certinha aqui: <strong>${userLocation.fullAddress}</strong>!</p>
+        <p>Já estou discando pro <strong>190</strong> e a viatura da Polícia Militar foi acionada para o seu ponto com urgência máxima!</p>
+        <p>Por favor, fica abrigada(o) em um comércio ou perto de outras pessoas. Eu não vou sair do seu lado até o socorro chegar!</p>
+        ${createCopomCardHtml()}
+      `;
       simulateEmergencyDispatch('PM');
     } else if (persona === '190') {
-      channelResponse = `<p>🚨 <strong>POLÍCIA MILITAR – COPOM 190:</strong></p>
+      channelResponse = `
+        <p>🚨 <strong>POLÍCIA MILITAR – COPOM 190:</strong></p>
         <p>Coordenadas georreferenciadas registradas no sistema: <strong>${userLocation.fullAddress}</strong>.</p>
-        <p>A guarnição policial do setor mais próximo foi empenhada com prioridade de código vermelho. Mantenha-se abrigada e atenta aos sinais luminosos da viatura.</p>`;
+        <p>A guarnição policial do setor mais próximo foi empenhada com prioridade de código vermelho. Mantenha-se abrigada e atenta aos sinais luminosos da viatura.</p>
+        ${createCopomCardHtml()}
+      `;
       simulateEmergencyDispatch('PM');
     } else if (persona === '192') {
-      channelResponse = `<p>🚑 <strong>REGULAÇÃO MÉDICA – SAMU 192:</strong></p>
+      channelResponse = `
+        <p>🚑 <strong>REGULAÇÃO MÉDICA – SAMU 192:</strong></p>
         <p>Ponto de resgate confirmado: <strong>${userLocation.fullAddress}</strong>.</p>
-        <p>Equipe móvel alertada para triagem e deslocamento. Mantenha a vítima em repouso e sem ingerir medicamentos por conta própria.</p>`;
+        <p>Equipe móvel alertada para triagem e deslocamento. Mantenha a vítima em repouso e sem ingerir medicamentos por conta própria.</p>
+        ${createSamuPepCardHtml()}
+      `;
       simulateEmergencyDispatch('SAMU');
     } else if (persona === '180') {
-      channelResponse = `<p>📞 <strong>CENTRAL DE ATENDIMENTO À MULHER – LIGUE 180:</strong></p>
+      channelResponse = `
+        <p>📞 <strong>CENTRAL DE ATENDIMENTO À MULHER – LIGUE 180:</strong></p>
         <p>Localização registrada: <strong>${userLocation.fullAddress}</strong>.</p>
-        <p>Mapeamos os serviços especializados da rede de proteção e a Delegacia Especializada de Atendimento à Mulher (DEAM) mais próxima da sua área.</p>`;
+        <p>Mapeamos os serviços especializados da rede de proteção e a Delegacia Especializada de Atendimento à Mulher (DEAM) mais próxima da sua área.</p>
+        ${createDisque100CardHtml()}
+      `;
     } else {
-      channelResponse = `<p>🛡️ <strong>OUVIDORIA NACIONAL DOS DIREITOS HUMANOS – DISQUE 100:</strong></p>
+      channelResponse = `
+        <p>🛡️ <strong>OUVIDORIA NACIONAL DOS DIREITOS HUMANOS – DISQUE 100:</strong></p>
         <p>Endereço georreferenciado anexado ao registro: <strong>${userLocation.fullAddress}</strong>.</p>
-        <p>As coordenadas territoriais foram vinculadas ao protocolo sigiloso de proteção.</p>`;
+        <p>As coordenadas territoriais foram vinculadas ao protocolo sigiloso de proteção.</p>
+        ${createDisque100CardHtml()}
+      `;
     }
 
     appendMessage('ai', channelResponse);
@@ -611,25 +694,20 @@ async function processAIResponse(userText) {
   const persona = appState.selectedPersona;
   const channel = CHANNELS_CONFIG[persona] || CHANNELS_CONFIG['maria'];
 
-  // 1. Salvar no histórico conversacional da sessão
-  appState.chatHistory = appState.chatHistory || [];
-  appState.chatHistory.push({ role: 'user', text: userText });
-
-  // 2. BLINDAGEM CLIENT-SIDE ADAPTADA POR PERSONA
+  // 1. BLINDAGEM CLIENT-SIDE ADAPTADA POR PERSONA
   const guardrailBlockedMessage = checkGuardrails(userText, persona);
   if (guardrailBlockedMessage) {
     showTypingIndicator();
     setTimeout(() => {
       hideTypingIndicator();
       appendMessage('ai', guardrailBlockedMessage);
-      appState.chatHistory.push({ role: 'model', text: guardrailBlockedMessage });
     }, 450);
     return;
   }
 
   showTypingIndicator();
 
-  // 3. SE FOR ENVIO EXPLÍCITO DE LOCALIZAÇÃO PELO TEXTO
+  // 2. SE FOR ENVIO EXPLÍCITO DE LOCALIZAÇÃO PELO TEXTO
   const lower = userText.toLowerCase();
   if (lower.includes('minha localização:') || lower.includes('minha localização é') || (lower.includes('gps') && lower.includes('aqui'))) {
     hideTypingIndicator();
@@ -637,16 +715,19 @@ async function processAIResponse(userText) {
     return;
   }
 
-  // 4. CHAMADA REAL À API GEMINI 3.6 COM A PERSONA DO CANAL
+  // 3. CHAMADA REAL À API GEMINI 3.6 COM A PERSONA DO CANAL
   if (API_CONFIG.useExternalAPI) {
     const apiResult = await sendToGeminiAPI(userText, persona);
     hideTypingIndicator();
     if (apiResult) {
-      appState.chatHistory.push({ role: 'model', text: apiResult });
-      const formattedHtml = apiResult.split('\n\n').map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
-      appendMessage('ai', formattedHtml);
+      let formattedHtml = apiResult.split('\n\n').map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
 
-      // Se a pessoa relatar perigo, abuso ou pedir socorro, exibe o botão rápido
+      // Se a pessoa relatar crise de pânico / medo / choque, acoplar exercício de respiração 4-7-8
+      if (lower.includes('ansied') || lower.includes('pânic') || lower.includes('panico') || lower.includes('medo') || lower.includes('tremend') || lower.includes('falta de ar') || lower.includes('não consigo respirar') || lower.includes('em choque')) {
+        formattedHtml += createBreathingCardHtml();
+      }
+
+      // Se a pessoa relatar perigo, abuso ou pedir socorro, exibe o botão rápido e cartões pertinentes
       if (lower.includes('abusad') || lower.includes('abuso') || lower.includes('estupr') || lower.includes('perigo') || lower.includes('me seguiu') || lower.includes('socorro') || lower.includes('me ajuda') || lower.includes('ajuda')) {
         let btnText = "📍 Mandar minha localização agora";
         if (persona === 'maria') btnText = "📍 Enviar minha localização para Maria chamar a polícia (190)";
@@ -656,25 +737,302 @@ async function processAIResponse(userText) {
         else if (persona === '180') btnText = "📍 Informar endereço para atendimento da Central 180";
         else if (persona === '100') btnText = "📍 Anexar endereço à denúncia do Disque 100";
 
-        appendMessage('ai', `
+        formattedHtml += `
           <div style="margin-top: 8px; text-align: center;">
             <button class="quick-chip chip-sos btn-loc-highlight" onclick="sendLocationToFriend()" style="margin-bottom: 4px; padding: 9px 18px; font-size: 0.88rem;">
               ${btnText}
             </button>
           </div>
-        `);
+        `;
+
+        if (lower.includes('estupr') || lower.includes('abusad') || lower.includes('abuso') || persona === '192') {
+          formattedHtml += createSamuPepCardHtml();
+        }
       }
+
+      appendMessage('ai', formattedHtml);
       return;
     }
   }
 
-  // 5. MOTOR LOCAL DE CONTINGÊNCIA ADAPTADO POR CANAL
+  // 4. MOTOR LOCAL DE CONTINGÊNCIA ADAPTADO POR CANAL
   setTimeout(() => {
     hideTypingIndicator();
-    const responseHtml = generateSpecializedAIResponse(userText, persona);
-    appState.chatHistory.push({ role: 'model', text: responseHtml.replace(/<[^>]*>?/gm, '') });
+    let responseHtml = generateSpecializedAIResponse(userText, persona);
+
+    if (lower.includes('ansied') || lower.includes('pânic') || lower.includes('panico') || lower.includes('medo') || lower.includes('tremend') || lower.includes('falta de ar') || lower.includes('não consigo respirar') || lower.includes('em choque')) {
+      responseHtml += createBreathingCardHtml();
+    }
+
     appendMessage('ai', responseHtml);
   }, 650);
+}
+
+/**
+ * COMPONENTES VISUAIS E DE ÁUDIO DE ALTA IMERSÃO
+ */
+function createVoiceNoteHtml(text, persona) {
+  const channel = CHANNELS_CONFIG[persona] || CHANNELS_CONFIG['maria'];
+  const clean = text.replace(/<[^>]*>?/gm, '').replace(/[\n\r]+/g, ' ').replace(/'/g, '').trim();
+  const label = channel.type === 'friend' ? `Mensagem de voz de ${channel.name}` : `Áudio oficial ${channel.name}`;
+
+  return `
+    <div class="voice-note-player">
+      <button class="voice-note-btn" onclick="playVoiceAudio(this, decodeURIComponent('${encodeURIComponent(clean)}'), '${persona}')" title="Ouvir áudio em voz alta">▶️</button>
+      <div class="voice-note-content">
+        <div class="voice-note-header">
+          <span>${label}</span>
+          <span class="voice-duration">0:00</span>
+        </div>
+        <div class="voice-waveform">
+          <div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div>
+          <div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div>
+          <div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div>
+          <div class="voice-bar"></div><div class="voice-bar"></div><div class="voice-bar"></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function createReactionsHtml() {
+  return `
+    <div class="msg-reactions-bar">
+      <button class="reaction-btn" onclick="toggleReaction(this, '❤️')">❤️ <span>Apoio</span></button>
+      <button class="reaction-btn" onclick="toggleReaction(this, '🙏')">🙏 <span>Gratidão</span></button>
+      <button class="reaction-btn" onclick="toggleReaction(this, '🛡️')">🛡️ <span>Segura</span></button>
+      <button class="reaction-btn" onclick="toggleReaction(this, '🫂')">🫂 <span>Abraço</span></button>
+    </div>
+  `;
+}
+
+function createBreathingCardHtml() {
+  const uniqueId = 'breathCircle_' + Math.floor(Math.random() * 10000);
+  return `
+    <div class="breathing-card">
+      <div class="breathing-title">🌿 Exercício de Acalmar a Respiração (4-7-8)</div>
+      <div class="breathing-desc">Siga o ritmo do círculo abaixo para desacelerar o coração e regular seu sistema nervoso:</div>
+      <div class="breathing-circle-container">
+        <div class="breathing-circle" id="${uniqueId}">Respire</div>
+      </div>
+      <button class="breathing-action-btn" onclick="toggleBreathingExercise(this, '${uniqueId}')">▶️ Iniciar Respiração Guiada</button>
+    </div>
+  `;
+}
+
+function createCopomCardHtml() {
+  return `
+    <div class="copom-tactical-card">
+      <div class="copom-tactical-header">
+        <span style="font-weight:700; color:#DC2626;">🚨 COPOM • DESPACHO DE VIATURA</span>
+        <span class="copom-badge">CÓDIGO VERMELHO</span>
+      </div>
+      <div class="copom-grid">
+        <div class="copom-grid-item"><span class="copom-label">Viatura Policial</span><span class="copom-val">RP-3108 (Setor 2)</span></div>
+        <div class="copom-grid-item"><span class="copom-label">Previsão Chegada</span><span class="copom-val">3 a 5 minutos</span></div>
+        <div class="copom-grid-item"><span class="copom-label">Localização</span><span class="copom-val">${userLocation.fullAddress}</span></div>
+        <div class="copom-grid-item"><span class="copom-label">Sirene</span><span class="copom-val">Modo Silencioso</span></div>
+      </div>
+      <div style="font-size:0.78rem; color:#B91C1C;"><strong>Orientação Tática:</strong> Mantenha seu celular em modo silencioso e abrigue-se em local movimentado ou comércio. Não confronte ninguém.</div>
+    </div>
+  `;
+}
+
+function createSamuPepCardHtml() {
+  return `
+    <div class="samu-pep-card">
+      <div class="samu-pep-header">⏱️ PROTOCOLO DE URGÊNCIA • PEP 72 HORAS</div>
+      <div class="samu-pep-body">
+        <p><strong>Janela de Ouro:</strong> A Profilaxia Pós-Exposição (PEP) deve ser iniciada nas primeiras <strong>72 horas</strong> após o fato para impedir a infecção por HIV e Hepatite B.</p>
+        <ul style="margin: 6px 0 6px 18px;">
+          <li>Atendimento médico e medicamentos 100% gratuitos no SUS.</li>
+          <li>Disponível em qualquer UPA ou Pronto-Socorro 24h.</li>
+          <li><strong>Não é obrigatório</strong> ter Boletim de Ocorrência nem autorização policial.</li>
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
+function createDisque100CardHtml() {
+  const protoNum = 'DH-2026-' + Math.floor(100000 + Math.random() * 900000);
+  return `
+    <div style="background: rgba(248, 250, 252, 0.8); border: 1.5px solid #CBD5E1; border-radius: 12px; padding: 14px; margin: 10px 0;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span style="font-weight:700; color:#1E293B;">🛡️ PROTOCOLO OFICIAL DE PROTEÇÃO</span>
+        <span style="font-size:0.75rem; background:#E2E8F0; padding:2px 8px; border-radius:4px; font-weight:600;">100% SIGILOSO</span>
+      </div>
+      <div style="font-size:0.85rem; color:#334155; margin-bottom:10px;">
+        Seu registro foi indexado sob o número: <strong style="color:#0F172A;">${protoNum}</strong>
+      </div>
+      <button class="quick-chip" onclick="copyProtocol('${protoNum}', this)" style="padding:5px 12px; font-size:0.8rem;">
+        📋 Copiar Número de Protocolo
+      </button>
+    </div>
+  `;
+}
+
+/* ==========================================================================
+   INTERAÇÕES DE ÁUDIO DE VOZ, REAÇÕES E RESPIRAÇÃO
+   ========================================================================== */
+let currentUtterance = null;
+let currentVoiceBtn = null;
+let currentVoiceTimer = null;
+
+function playVoiceAudio(btn, text, personaId) {
+  if (!('speechSynthesis' in window)) {
+    showToast('Síntese de voz não suportada neste dispositivo.');
+    return;
+  }
+
+  const player = btn.closest('.voice-note-player');
+  const durationEl = player ? player.querySelector('.voice-duration') : null;
+
+  // Se já estiver tocando este mesmo botão, pausar
+  if (btn.classList.contains('playing')) {
+    window.speechSynthesis.cancel();
+    stopCurrentAudioAnimation();
+    return;
+  }
+
+  // Cancelar áudios anteriores
+  window.speechSynthesis.cancel();
+  stopCurrentAudioAnimation();
+
+  // Limpar texto de tags HTML
+  const clean = text.replace(/<[^>]*>?/gm, '').replace(/[\*\_]/g, '').trim();
+  if (!clean) return;
+
+  const utter = new SpeechSynthesisUtterance(clean);
+  utter.lang = 'pt-BR';
+
+  const voices = window.speechSynthesis.getVoices();
+  const ptVoices = voices.filter(v => v.lang.startsWith('pt') || v.lang.includes('BR'));
+
+  if (personaId === 'maria') {
+    const femaleVoice = ptVoices.find(v => {
+      const n = v.name.toLowerCase();
+      return n.includes('maria') || n.includes('female') || n.includes('luciana') || n.includes('helena') || n.includes('zira') || n.includes('leticia') || n.includes('raquel') || n.includes('francisca');
+    });
+    if (femaleVoice) utter.voice = femaleVoice;
+    else if (ptVoices[0]) utter.voice = ptVoices[0];
+    utter.pitch = 1.12;
+    utter.rate = 1.0;
+  } else if (personaId === 'joao') {
+    const maleVoice = ptVoices.find(v => {
+      const n = v.name.toLowerCase();
+      return n.includes('joao') || n.includes('male') || n.includes('felipe') || n.includes('antonio') || n.includes('daniel') || n.includes('ricardo') || n.includes('gabriel');
+    });
+    if (maleVoice) utter.voice = maleVoice;
+    else if (ptVoices[0]) utter.voice = ptVoices[0];
+    utter.pitch = 0.88;
+    utter.rate = 0.98;
+  } else {
+    if (ptVoices[0]) utter.voice = ptVoices[0];
+    utter.pitch = 1.0;
+    utter.rate = 1.0;
+  }
+
+  btn.classList.add('playing');
+  btn.innerHTML = '⏸️';
+  if (player) player.classList.add('is-playing');
+  currentVoiceBtn = btn;
+
+  let elapsed = 0;
+  if (durationEl) durationEl.innerText = '0:00';
+  currentVoiceTimer = setInterval(() => {
+    elapsed++;
+    const m = Math.floor(elapsed / 60);
+    const s = elapsed % 60;
+    if (durationEl) durationEl.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+  }, 1000);
+
+  utter.onend = () => {
+    stopCurrentAudioAnimation();
+  };
+
+  utter.onerror = () => {
+    stopCurrentAudioAnimation();
+  };
+
+  currentUtterance = utter;
+  window.speechSynthesis.speak(utter);
+}
+
+function stopCurrentAudioAnimation() {
+  if (currentVoiceTimer) {
+    clearInterval(currentVoiceTimer);
+    currentVoiceTimer = null;
+  }
+  if (currentVoiceBtn) {
+    currentVoiceBtn.classList.remove('playing');
+    currentVoiceBtn.innerHTML = '▶️';
+    const player = currentVoiceBtn.closest('.voice-note-player');
+    if (player) player.classList.remove('is-playing');
+    currentVoiceBtn = null;
+  }
+  currentUtterance = null;
+}
+
+function toggleReaction(btn, emoji) {
+  btn.classList.toggle('reacted');
+  if (btn.classList.contains('reacted')) {
+    showToast(`Reação enviada: ${emoji}`);
+  }
+}
+
+let breathingInterval = null;
+let isBreathingActive = false;
+
+function toggleBreathingExercise(btn, circleId) {
+  const circle = document.getElementById(circleId);
+  if (!circle) return;
+
+  if (isBreathingActive) {
+    clearInterval(breathingInterval);
+    breathingInterval = null;
+    isBreathingActive = false;
+    btn.innerHTML = '▶️ Iniciar Respiração Guiada';
+    circle.className = 'breathing-circle';
+    circle.innerText = 'Respire';
+    return;
+  }
+
+  isBreathingActive = true;
+  btn.innerHTML = '⏹️ Pausar Exercício';
+
+  function cycle() {
+    if (!isBreathingActive) return;
+    circle.className = 'breathing-circle inhale';
+    circle.innerText = 'Inspire (4s)';
+    setTimeout(() => {
+      if (!isBreathingActive) return;
+      circle.className = 'breathing-circle hold';
+      circle.innerText = 'Segure (7s)';
+      setTimeout(() => {
+        if (!isBreathingActive) return;
+        circle.className = 'breathing-circle exhale';
+        circle.innerText = 'Expire (8s)';
+      }, 7000);
+    }, 4000);
+  }
+
+  cycle();
+  breathingInterval = setInterval(cycle, 19000);
+}
+
+function copyProtocol(num, btn) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(num).then(() => {
+      btn.innerText = '✅ Protocolo Copiado!';
+      setTimeout(() => {
+        btn.innerText = '📋 Copiar Número de Protocolo';
+      }, 3000);
+      showToast('Número de protocolo copiado para a área de transferência.');
+    });
+  } else {
+    showToast(`Protocolo: ${num}`);
+  }
 }
 
 function showTypingIndicator() {
