@@ -310,7 +310,7 @@ SEU PAPEL E DIRETRIZES:
  * Requisição Inteligente à API Google Gemini (com fallback entre modelos 2.0 e 1.5)
  */
 async function requestGeminiText(contents, systemText, maxTokens = 1000) {
-  const apiKey = API_CONFIG.apiKey;
+  const apiKey = (typeof localStorage !== 'undefined' && localStorage.getItem('gemini_api_key')) || API_CONFIG.apiKey;
   if (!apiKey || !API_CONFIG.useExternalAPI) return null;
 
   const models = [API_CONFIG.primaryModel, API_CONFIG.fallbackModel];
@@ -326,7 +326,7 @@ async function requestGeminiText(contents, systemText, maxTokens = 1000) {
   for (const model of models) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 4000);
+      const timer = setTimeout(() => controller.abort(), 3500);
       const url = `${API_CONFIG.endpointBase}/${model}:generateContent?key=${apiKey}`;
       const response = await fetch(url, {
         method: "POST",
@@ -343,9 +343,14 @@ async function requestGeminiText(contents, systemText, maxTokens = 1000) {
         const data = await response.json();
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text && text.trim()) return text.trim();
+      } else {
+        if (response.status === 401 || response.status === 403) {
+          console.warn(`Gemini API HTTP ${response.status} (credenciais). Utilizando inteligência conversacional nativa.`);
+          break;
+        }
       }
     } catch (e) {
-      console.warn(`Tentativa com ${model} falhou ou timeout:`, e);
+      console.warn(`Tentativa com ${model} falhou:`, e);
     }
   }
 
@@ -1114,7 +1119,7 @@ function hideTypingIndicator() {
 function generateSpecializedAIResponse(rawText, persona) {
   const text = rawText.toLowerCase().trim();
 
-  // === 1. MARIA (APOIO FORMAL E HUMANIZADO) ===
+  // === 1. MARIA (APOIO FORMAL, HUMANIZADO E CULTO) ===
   if (persona === 'maria') {
     // Pedido de Socorro / Urgência
     if (text === 'socorro' || text === 'ajuda' || text === 'me ajuda' || text === 'socorro!' || text === 'help') {
@@ -1186,76 +1191,102 @@ function generateSpecializedAIResponse(rawText, persona) {
     // Desabafo / Tristeza / Chorar / Angústia
     if (text.includes('triste') || text.includes('chorei') || text.includes('chorando') || text.includes('tô mal') || text.includes('to mal') || text.includes('brigou') || text.includes('desabafar') || text.includes('angustia')) {
       const ventList = [
-        `<p>Compreendo que este seja um momento difícil e doloroso. Sinta-se à vontade para compartilhar o que está sentindo, este espaço é de absoluto respeito e acolhimento.</p><p>Pode expressar suas preocupações com tranquilidade; você será ouvida(o) sem qualquer julgamento.</p>`,
-        `<p>Estou à sua inteira disposição para prestar escuta atenta. Não guarde essas aflições para si; compartilhar o que sente pode proporcionar alívio e clareza.</p>`,
-        `<p>Em determinadas situações, as dificuldades podem parecer avassaladoras. Lembre-se de que você tem apoio neste canal. Expresse seus sentimentos no tempo que julgar necessário.</p>`
+        `<p>Compreendo que este seja um momento difícil e delicado. Sinta-se inteiramente à vontade para compartilhar o que está sentindo, este espaço é de absoluto respeito e sigilo.</p><p>Pode expressar seus pensamentos com tranquilidade; você será acolhida(o) com profunda empatia.</p>`,
+        `<p>Estou à sua inteira disposição para prestar uma escuta atenta e afetuosa. Não guarde essas aflições para si; desabafar traz alívio e clareza.</p>`,
+        `<p>Momentos desafiadores exigem paciência e acolhimento. Saiba que você tem em mim um apoio genuíno. Expresse seus sentimentos no tempo que julgar necessário.</p>`
       ];
       return responseMemory.pick('maria_vent', ventList);
     }
 
-    // Cumprimentos & "Tudo bem"
-    if (text.includes('tudo bem') || text.includes('tudo bom') || text.includes('como vai') || text.includes('como cê tá') || text.includes('como vc ta')) {
-      const fineList = [
-        `<p>Tudo está em perfeita ordem por aqui, agradeço por perguntar. Como estão as coisas com você hoje? Gostaria de conversar ou necessita de alguma orientação?</p>`,
-        `<p>Por aqui está tudo em paz. E com você, como tem sido o seu dia? Estou à disposição para dialogarmos.</p>`,
-        `<p>Estou muito bem, obrigada pela consideração. Como você está se sentindo hoje? Fique à vontade para conversar sobre qualquer assunto.</p>`
-      ];
-      return responseMemory.pick('maria_fine', fineList);
-    }
-
-    if (text === 'oi' || text === 'ola' || text === 'olá' || text === 'oii' || text === 'oiii' || text === 'e ai' || text === 'e aí' || text.startsWith('oi ') || text.startsWith('olá ')) {
+    // Cumprimentos & Aberturas Naturais
+    if (text === 'oi' || text === 'ola' || text === 'olá' || text === 'oii' || text === 'oiii' || text === 'alô' || text === 'alo' || text === 'e ai' || text === 'e aí' || text.startsWith('oi ') || text.startsWith('olá ') || text.startsWith('bom dia') || text.startsWith('boa tarde') || text.startsWith('boa noite') || text.includes('saudações')) {
       const greetList = [
-        `<p>Olá, seja muito bem-vinda(o). É um prazer falar com você. Como você está hoje? Está tudo bem por aí?</p>`,
-        `<p>Olá. Estou conectada e à sua disposição para conversar. Em que posso lhe ser útil neste momento?</p>`,
-        `<p>Olá! Tudo bem com você? Gostaria de conversar sobre algum tema ou necessita de algum esclarecimento?</p>`
+        `<p>Olá! Que alegria receber sua mensagem. Como você está hoje? Espero que seu dia esteja correndo com serenidade.</p>`,
+        `<p>Olá! É uma satisfação imensa falar com você. Estou perfeitamente conectada e à sua disposição. Como tem passado?</p>`,
+        `<p>Olá! Tudo bem com você? Fico muito feliz em conversarmos. Gostaria de compartilhar algo do seu dia ou conversar sobre algum tema?</p>`
       ];
       return responseMemory.pick('maria_greet', greetList);
     }
 
-    // Reclamação / Dúvida se ouviu
-    if (text.includes('não ouviu') || text.includes('nao ouviu') || text.includes('não me ouviu') || text.includes('nao me ouviu') || text.includes('não entendeu') || text.includes('nao entendeu') || text.includes('repetindo') || text.includes('mesma coisa') || text.includes('não tá prestando') || text.includes('nao ta prestando') || text.includes('falando que tá') || text.includes('falei pra gente') || text.includes('tô te chamando') || text.includes('to te chamando') || text.includes('me escuta direito')) {
-      const mariaReclamList = [
-        `<p>Peço sinceras desculpas pela breve desatenção. Compreendi perfeitamente sua colocação sobre o convite para sairmos e passearmos. Aceito com satisfação, podemos nos programar sim.</p>`,
-        `<p>Peço escusas por qualquer falha na resposta anterior. Estou com atenção plena em sua mensagem. Por favor, prossiga e vamos combinar os detalhes.</p>`,
-        `<p>Compreendo a sua observação e peço desculpas pelo equívoco. Estou atenta ao que você disse e pronta para combinarmos o encontro. Onde você gostaria de ir?</p>`
+    // Bem-estar & "Tudo bem"
+    if (text.includes('tudo bem') || text.includes('tudo bom') || text.includes('como vai') || text.includes('como você está') || text.includes('como cê tá') || text.includes('como vc ta') || text.includes('tudo certo')) {
+      const fineList = [
+        `<p>Tudo está ótimo por aqui, muito obrigada pela gentileza de perguntar! E com você, como estão as coisas hoje? Espero que esteja tendo momentos agradáveis.</p>`,
+        `<p>Por aqui tudo em perfeita paz e tranquilidade. É sempre reconfortante falar com você. Como você está se sentindo hoje? Fique à vontade para me contar.</p>`,
+        `<p>Estou muito bem, grata pela delicadeza e consideração. Me conte: como tem sido a sua semana? Tem alguma novidade interessante?</p>`
       ];
-      return responseMemory.pick('maria_reclam', mariaReclamList);
+      return responseMemory.pick('maria_fine', fineList);
+    }
+
+    // Onde está / Rotina / "O que está fazendo"
+    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('fazendo o que') || text.includes('tá fazendo') || text.includes('tá em casa') || text.includes('tá livre') || text.includes('tá ocupada') || text.includes('sua rotina')) {
+      const routineList = [
+        `<p>Estou em minha residência no momento, organizando minhas atividades cotidianas e com tempo reservado para conversar com você. E você, o que está fazendo de bom agora?</p>`,
+        `<p>Estou por aqui, descansando um pouco e com plena atenção para nós dialogarmos com tranquilidade. Como está a sua rotina neste momento?</p>`
+      ];
+      return responseMemory.pick('maria_routine', routineList);
+    }
+
+    // Trabalho / Estudos / Cansaço / Dia intenso
+    if (text.includes('trabalh') || text.includes('estud') || text.includes('faculdade') || text.includes('escola') || text.includes('prova') || text.includes('cansad') || text.includes('dia corrido') || text.includes('sono') || text.includes('preguiça') || text.includes('rotina')) {
+      const workList = [
+        `<p>Compreendo muito bem. A rotina profissional e de estudos costuma exigir bastante dedicação e energia de nós. É fundamental reservar uma pausa para relaxar. Como foi o restante das suas tarefas hoje?</p>`,
+        `<p>Dias intensos realmente podem nos deixar com a energia esgotada. Espero que agora você consiga desacelerar um pouco e descansar o corpo e a mente. Gostaria de desabafar ou conversar sobre algo leve?</p>`
+      ];
+      return responseMemory.pick('maria_work', workList);
+    }
+
+    // Opinião / Sugestão / "O que você acha"
+    if (text.includes('o que você acha') || text.includes('o que acha') || text.includes('qual sua opinião') || text.includes('concorda') || text.includes('acha uma boa') || text.includes('o que me diz') || text.includes('o que sugere')) {
+      const opinionList = [
+        `<p>Considero uma excelente reflexão. Acredito que, quando analisamos os cenários com calma e discernimento, tomamos as decisões mais acertadas. Quais alternativas você tem considerado com maior apreço?</p>`,
+        `<p>Penso que é uma proposta muito sensata e válida. Ter clareza sobre suas prioridades facilita qualquer escolha. Me conte mais sobre como você pretende conduzir essa ideia!</p>`
+      ];
+      return responseMemory.pick('maria_opinion', opinionList);
     }
 
     // Convite para sair / encontrar / passear
-    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei a maria') || text.includes('rolê') || text.includes('role') || text.includes('dar um role') || text.includes('dar um rolê') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('espairecer') || text.includes('bater perna')) {
+    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei a maria') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('espairecer') || text.includes('dar uma volta')) {
       const mariaSairList = [
-        `<p>Agradeço imensamente pelo convite, aceito com muita satisfação. Seria excelente reservarmos um momento para conversar e espairecer. Qual local e horário você prefere?</p>`,
-        `<p>Com certeza, será uma alegria nos encontrarmos. Você gostaria de ir ao shopping, a uma cafeteria ou a outro local de sua preferência?</p>`,
-        `<p>Excelente iniciativa. Gostaria muito de encontrar você. Por favor, informe o local e o horário mais convenientes para nos organizarmos.</p>`,
-        `<p>Apoio plenamente a ideia. Um momento de diálogo e convivência é sempre revigorante. Quais são os seus planos para a ocasião?</p>`
+        `<p>Agradeço imensamente pelo amável convite, aceito com muita satisfação! Seria excelente reservarmos um momento para conversar e espairecer. Qual local e horário ficam mais confortáveis para você?</p>`,
+        `<p>Com certeza, será uma alegria nos encontrarmos! Podemos ir a uma cafeteria aconchegante, a um restaurante tranquilo ou passear pelo shopping. O que você prefere?</p>`,
+        `<p>Excelente iniciativa! Adoraria encontrar você. Por favor, me informe o local e o horário mais convenientes para nos organizarmos com tranquilidade.</p>`
       ];
       return responseMemory.pick('maria_sair', mariaSairList);
     }
 
-    // Comida / Lanche / Restaurante
+    // Comida / Lanche / Restaurante / Café
     if (text.includes('comer') || text.includes('fome') || text.includes('lanche') || text.includes('hambúrguer') || text.includes('hamburguer') || text.includes('pizza') || text.includes('açaí') || text.includes('acai') || text.includes('café') || text.includes('cafe') || text.includes('docinho') || text.includes('almoçar') || text.includes('almocar') || text.includes('jantar')) {
       const mariaFoodList = [
-        `<p>É uma ótima sugestão. Fazer uma boa refeição e conversar é sempre reconfortante. Qual tipo de culinária ou restaurante você prefere?</p>`,
-        `<p>Concordo plenamente. Podemos tomar um café ou fazer um lanche agradável. Qual estabelecimento você gostaria de visitar?</p>`
+        `<p>É uma ótima sugestão! Fazer uma boa refeição acompanhada de uma conversa agradável é sempre muito reconfortante. Qual tipo de culinária ou estabelecimento você prefere?</p>`,
+        `<p>Concordo plenamente! Podemos tomar um café especial ou desfrutar de um lanche saboroso. Você tem algum restaurante de preferência em mente?</p>`
       ];
       return responseMemory.pick('maria_food', mariaFoodList);
     }
 
-    // Tédio / "Sem nada para fazer"
-    if (text.includes('tédio') || text.includes('tedio') || text.includes('entediad') || text.includes('à toa') || text.includes('a toa') || text.includes('sem nada pra fazer') || text.includes('de bobeira') || text.includes('nada pra fazer')) {
-      const mariaTedioList = [
-        `<p>Compreendo perfeitamente. Momentos ociosos podem nos deixar reflexivos. Fico feliz que tenha entrado em contato. Gostaria de sugerir alguma atividade ou conversar sobre algum tema?</p>`,
-        `<p>O diálogo é uma excelente forma de tornar o dia mais agradável e produtivo. Compartilhe comigo alguma novidade ou, se desejar, podemos planejar uma atividade.</p>`
+    // Tempo / Clima / Novidades / Bater papo casual
+    if (text.includes('tempo') || text.includes('clima') || text.includes('chuva') || text.includes('calor') || text.includes('frio') || text.includes('novidade') || text.includes('bater papo') || text.includes('vamos conversar') || text.includes('me conta')) {
+      const chatCasualList = [
+        `<p>Por aqui o clima está muito agradável e o ambiente bastante sereno. É sempre muito prazeroso conversar com você. Me conte: o que tem chamado sua atenção ultimamente?</p>`,
+        `<p>Adoro cultivar um diálogo agradável sobre o cotidiano! É uma das melhores formas de descontrair. O que você gostaria de comentar ou planejar para os próximos dias?</p>`
       ];
-      return responseMemory.pick('maria_tedio', mariaTedioList);
+      return responseMemory.pick('maria_chat_casual', chatCasualList);
+    }
+
+    // Hobbies / Cultura / Livros / Música / Filmes
+    if (text.includes('música') || text.includes('musica') || text.includes('filme') || text.includes('série') || text.includes('serie') || text.includes('livro') || text.includes('ler') || text.includes('hobby') || text.includes('hobbies') || text.includes('gosta de')) {
+      const hobbyList = [
+        `<p>Aprecio muito uma boa leitura, músicas instrumentais suaves e filmes com narrativas sensíveis e inspiradoras. E você, quais são suas preferências culturais ou o que tem assistido ultimamente?</p>`,
+        `<p>A arte e o entretenimento são essenciais para renovar nossos pensamentos e trazer inspiração. Qual estilo musical ou obra mais atrai o seu interesse?</p>`
+      ];
+      return responseMemory.pick('maria_hobby', hobbyList);
     }
 
     // Casa / Visita
     if (text.includes('minha casa') || text.includes('sua casa') || text.includes('aqui em casa') || text.includes('vem aqui') || text.includes('ir aí') || text.includes('ir ai') || text.includes('posso ir') || text.includes('quer vir')) {
       const mariaCasaList = [
-        `<p>Com certeza. Se for conveniente para você, posso me deslocar até sua residência para conversarmos com tranquilidade.</p>`,
-        `<p>Sinta-se convidada(o) a vir até minha residência. Podemos preparar algo agradável, assistir a um filme e colocar as conversas em dia com total conforto.</p>`
+        `<p>Com certeza. Se for conveniente para você, posso me deslocar até sua residência no momento oportuno para conversarmos com total tranquilidade.</p>`,
+        `<p>Sinta-se muito bem-vinda(o) em minha residência quando desejar. Podemos preparar algo agradável e colocar os assuntos em dia com todo o conforto.</p>`
       ];
       return responseMemory.pick('maria_casa', mariaCasaList);
     }
@@ -1263,8 +1294,8 @@ function generateSpecializedAIResponse(rawText, persona) {
     // Risada / Humor
     if (text.includes('kkk') || text.includes('haha') || text.includes('rsrs') || text.includes('engraçad') || text.includes('engracad') || text.includes('rindo')) {
       const mariaLaughList = [
-        `<p>Fico muito satisfeita em presenciar seu bom humor. É sempre muito positivo compartilhar momentos de alegria e descontração.</p>`,
-        `<p>É reconfortante compartilhar momentos alegres. O bom humor traz leveza ao nosso cotidiano.</p>`
+        `<p>Fico muito satisfeita em presenciar seu bom humor. É sempre muito positivo compartilhar momentos de leveza e alegria.</p>`,
+        `<p>É reconfortante compartilhar momentos alegres. O bom humor traz um frescor especial ao nosso cotidiano.</p>`
       ];
       return responseMemory.pick('maria_laugh', mariaLaughList);
     }
@@ -1272,50 +1303,59 @@ function generateSpecializedAIResponse(rawText, persona) {
     // Saudades / Carinho
     if (text.includes('saudade') || text.includes('saudades') || text.includes('te amo') || text.includes('gosto de você') || text.includes('gosto muito')) {
       const mariaLoveList = [
-        `<p>Agradeço sinceramente pelo carinho e pelas palavras gentis. É recíproca a consideração e o apreço que tenho por você.</p>`,
-        `<p>Muito obrigada pelo carinho. É sempre muito gratificante e confortante manter este canal de comunicação e confiança mútuos.</p>`
+        `<p>Agradeço sinceramente pelo carinho e pelas palavras gentis. É recíproca a consideração, o respeito e o apreço que tenho por você.</p>`,
+        `<p>Muito obrigada pelo carinho. É sempre muito gratificante e reconfortante manter este canal de comunicação e confiança mútuos.</p>`
       ];
       return responseMemory.pick('maria_love', mariaLoveList);
     }
 
-    // Onde está / Rotina
-    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('fazendo o que') || text.includes('tá fazendo') || text.includes('tá em casa') || text.includes('tá livre') || text.includes('tá ocupada')) {
-      const routineList = [
-        `<p>Estou em casa no momento, com a rotina organizada. Caso necessite de apoio, companhia ou deseje conversar, estou plenamente à sua disposição.</p>`,
-        `<p>Estou por aqui, disponível para lhe ouvir e orientar. Havendo necessidade de auxílio ou de uma conversa atenta, sinta-se à vontade para me contatar.</p>`
+    // Confirmação / "Sim" / "Concordo" / "Verdade"
+    if (text === 'sim' || text === 'claro' || text === 'com certeza' || text === 'verdade' || text === 'exatamente' || text === 'concordo' || text === 'perfeito' || text === 'entendi' || text === 'legal' || text === 'bacana' || text === 'show' || text === 'ótimo' || text === 'otimo') {
+      const mariaAgreeList = [
+        `<p>Que excelente constatar essa sintonia. É muito gratificante quando os pensamentos se alinham com tanta naturalidade. Como você gostaria de dar continuidade a essa questão?</p>`,
+        `<p>Exatamente, concordo plenamente com você. Fique inteiramente à vontade para me apresentar quaisquer outros detalhes que julgar pertinentes.</p>`
       ];
-      return responseMemory.pick('maria_routine', routineList);
+      return responseMemory.pick('maria_agree', mariaAgreeList);
+    }
+
+    // Reclamação / Dúvida se ouviu
+    if (text.includes('não ouviu') || text.includes('nao ouviu') || text.includes('não me ouviu') || text.includes('nao me ouviu') || text.includes('não entendeu') || text.includes('nao entendeu') || text.includes('repetindo') || text.includes('mesma coisa') || text.includes('não tá prestando') || text.includes('nao ta prestando') || text.includes('falando que tá') || text.includes('falei pra gente') || text.includes('tô te chamando') || text.includes('to te chamando') || text.includes('me escuta direito')) {
+      const mariaReclamList = [
+        `<p>Peço sinceras desculpas pela breve desatenção anterior. Você tem total razão; estou com atenção absoluta voltada para você neste momento. Por favor, prossiga e vamos combinar todos os detalhes.</p>`,
+        `<p>Compreendo perfeitamente sua observação e peço escusas pela resposta anterior. Estou atenta ao que você disse e pronta para conversarmos sobre suas ideias. O que você gostaria de fazer?</p>`
+      ];
+      return responseMemory.pick('maria_reclam', mariaReclamList);
     }
 
     // Agradecimento
-    if (text.includes('obrigad') || text.includes('valeu') || text.includes('te amo') || text.includes('linda') || text.includes('fofa')) {
+    if (text.includes('obrigad') || text.includes('valeu') || text.includes('agradeço') || text.includes('linda') || text.includes('fofa')) {
       const thanksList = [
-        `<p>Não há de quê. É uma honra e uma satisfação poder oferecer apoio e acolhimento. Conte sempre com minha colaboração e respeito.</p>`,
-        `<p>Agradeço pelas amáveis palavras. Saiba que você pode sempre contar com minha atenção e dedicação contínuas.</p>`
+        `<p>Não há de quê! É uma honra e uma imensa satisfação poder oferecer diálogo, apoio e acolhimento. Conte sempre com minha dedicação e respeito.</p>`,
+        `<p>Agradeço pelas amáveis palavras. Saiba que você pode sempre contar com minha atenção e apreço contínuos.</p>`
       ];
       return responseMemory.pick('maria_thanks', thanksList);
     }
 
     // Despedida
-    if (text.includes('tchau') || text.includes('vou dormir') || text.includes('vou sair') || text.includes('depois falo') || text.includes('fui')) {
+    if (text.includes('tchau') || text.includes('vou dormir') || text.includes('vou sair') || text.includes('depois falo') || text.includes('fui') || text.includes('até mais') || text.includes('ate mais')) {
       const byeList = [
-        `<p>Perfeito. Cuide-se com atenção. Caso necessite de qualquer assistência, este canal permanece à sua disposição a qualquer momento. Tenha um ótimo descanso.</p>`,
-        `<p>Até breve. Desejo-lhe um excelente descanso e serenidade. Havendo qualquer emergência, sinta-se segura(o) para retornar o contato imediatamente.</p>`
+        `<p>Perfeito. Cuide-se com atenção e carinho. Caso necessite de qualquer conversa ou assistência, estou sempre à sua disposição. Tenha um excelente descanso!</p>`,
+        `<p>Até breve! Desejo-lhe muita paz, serenidade e bons momentos. Havendo qualquer necessidade, sinta-se segura(o) para retornar o contato quando desejar.</p>`
       ];
       return responseMemory.pick('maria_bye', byeList);
     }
 
-    // Resposta formal padrão
+    // Resposta formal padrão HUMANIZADA (conversacional, engajadora e reflexiva)
     const genericList = [
-      `<p>Compreendo perfeitamente o seu relato. Por favor, continue, estou acompanhando cada detalhe com total atenção e respeito.</p>`,
-      `<p>Entendi as considerações que você apresentou. Como você gostaria de proceder diante desse cenário?</p>`,
-      `<p>Estou atenta a todas as informações que você compartilha. Sinta-se à vontade para prosseguir com suas colocações.</p>`,
-      `<p>Pode dar continuidade ao seu relato. Estou presente para lhe oferecer escuta cuidadosa e acolhedora.</p>`
+      `<p>Compreendo perfeitamente sua colocação e acho muito interessante essa reflexão. O que mais você gostaria de comentar a respeito?</p>`,
+      `<p>Faz muito sentido o que você apontou. É sempre muito enriquecedor conversar com você; me conte mais sobre como você enxerga essa questão.</p>`,
+      `<p>Entendo com clareza o que você compartilhou. Me conte mais sobre suas impressões; gosto muito de acompanhar a sua perspectiva.</p>`,
+      `<p>Concordo com os pontos que você destacou. Ter essa oportunidade de conversarmos com calma é muito agradável. Fique à vontade para aprofundar suas considerações.</p>`
     ];
     return responseMemory.pick('maria_generic', genericList);
   }
 
-  // === 2. JOÃO (APOIO FORMAL, SEGURO E PROTETOR) ===
+  // === 2. JOÃO (APOIO FORMAL, SEGURO, PROTETOR E CULTO) ===
   if (persona === 'joao') {
     // Pedido de Socorro / Urgência
     if (text === 'socorro' || text === 'ajuda' || text === 'me ajuda' || text === 'socorro!' || text === 'help') {
@@ -1375,51 +1415,95 @@ function generateSpecializedAIResponse(rawText, persona) {
       return responseMemory.pick('joao_panic', panicList);
     }
 
-    // Reclamação / Dúvida se ouviu
-    if (text.includes('não ouviu') || text.includes('nao ouviu') || text.includes('não me ouviu') || text.includes('nao me ouviu') || text.includes('não entendeu') || text.includes('nao entendeu') || text.includes('repetindo') || text.includes('mesma coisa') || text.includes('não tá prestando') || text.includes('nao ta prestando') || text.includes('falando que tá') || text.includes('falei pra gente') || text.includes('tô te chamando') || text.includes('to te chamando') || text.includes('escuta direito') || text.includes('você é burro')) {
-      const joaoReclamList = [
-        `<p>Peço escusas pela breve interrupção. Compreendi perfeitamente o que você expressou sobre o convite para sairmos. Aceito com satisfação, onde você gostaria de ir?</p>`,
-        `<p>Compreendo sua observação e peço desculpas pela resposta anterior. Estou acompanhando com total atenção, podemos combinar o encontro conforme você mencionou.</p>`,
-        `<p>Peço desculpas pelo equívoco anterior. Agora estou com foco pleno em sua mensagem. Por favor, indique suas preferências para o encontro.</p>`
+    // Cumprimentos & Aberturas Naturais
+    if (text === 'oi' || text === 'ola' || text === 'olá' || text === 'alô' || text === 'alo' || text === 'e ai' || text === 'e aí' || text.startsWith('oi ') || text.startsWith('fala') || text.startsWith('olá ') || text.startsWith('bom dia') || text.startsWith('boa tarde') || text.startsWith('boa noite') || text.includes('saudações')) {
+      const greetList = [
+        `<p>Olá! Tudo bem com você? É uma satisfação atender ao seu contato. Como tem passado?</p>`,
+        `<p>Olá, seja muito bem-vinda(o). Estou à sua disposição para conversarmos com atenção e respeito. Como estão as coisas por aí?</p>`,
+        `<p>Olá! Que excelente falar com você. Estou com tempo disponível e pronto para dialogarmos. Em que posso ser útil ou sobre o que gostaria de conversar?</p>`
       ];
-      return responseMemory.pick('joao_reclam', joaoReclamList);
+      return responseMemory.pick('joao_greet', greetList);
+    }
+
+    // Bem-estar & "Tudo bem"
+    if (text.includes('tudo bem') || text.includes('tudo bom') || text.includes('como vai') || text.includes('como você está') || text.includes('como cê tá') || text.includes('tudo certo') || text.includes('tudo em ordem')) {
+      const fineList = [
+        `<p>Tudo está excelente por aqui, muito obrigado pela gentileza de perguntar! E com você, como estão as coisas hoje? Está tudo correndo em paz?</p>`,
+        `<p>Por aqui tudo em perfeita ordem e sob controle. Como tem sido o seu dia? Fique inteiramente à vontade para compartilhar suas novidades.</p>`,
+        `<p>Tudo muito bem e produtivo por aqui, agradeço a consideração. Me conte: como você tem passado nestes últimos dias?</p>`
+      ];
+      return responseMemory.pick('joao_fine', fineList);
+    }
+
+    // Onde você tá / Rotina
+    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('fazendo o que') || text.includes('tá fazendo') || text.includes('tá em casa') || text.includes('tá livre') || text.includes('tá ocupado') || text.includes('sua rotina')) {
+      const routineList = [
+        `<p>Estou em minha residência no momento, adiantando algumas leituras e tarefas cotidianas, mas com total disponibilidade para conversarmos. E por aí, o que você tem feito de bom?</p>`,
+        `<p>Estou por aqui com a rotina organizada e bastante tranquilo. É sempre um prazer reservar esse momento para dialogarmos. Como estão suas atividades hoje?</p>`
+      ];
+      return responseMemory.pick('joao_routine', routineList);
+    }
+
+    // Trabalho / Estudos / Cansaço / Dia intenso
+    if (text.includes('trabalh') || text.includes('estud') || text.includes('faculdade') || text.includes('escola') || text.includes('prova') || text.includes('cansad') || text.includes('dia corrido') || text.includes('sono') || text.includes('preguiça') || text.includes('rotina')) {
+      const workList = [
+        `<p>Compreendo perfeitamente. A rotina profissional e acadêmica frequentemente exige muito foco e resiliência. O importante é saber dosar o esforço e descansar adequadamente. Como você está se sentindo agora?</p>`,
+        `<p>Dias intensos realmente cobram seu preço em nosso bem-estar. Permita-se desacelerar um pouco agora e recarregar as energias. Se quiser desabafar sobre suas tarefas, estou à disposição para lhe ouvir.</p>`
+      ];
+      return responseMemory.pick('joao_work', workList);
+    }
+
+    // Opinião / Sugestão / "O que você acha"
+    if (text.includes('o que você acha') || text.includes('o que acha') || text.includes('qual sua opinião') || text.includes('concorda') || text.includes('acha uma boa') || text.includes('o que me diz') || text.includes('o que sugere')) {
+      const opinionList = [
+        `<p>Acho uma ponderação muito pertinente e sensata. Analisar os prós e contras com calma nos proporciona maior segurança em qualquer decisão. Qual alternativa mais agrada a você neste momento?</p>`,
+        `<p>Concordo plenamente com sua linha de raciocínio. Vejo muita coerência nessa sua visão. O que mais você planejou para colocar essa ideia em prática?</p>`
+      ];
+      return responseMemory.pick('joao_opinion', opinionList);
     }
 
     // Convite para sair / encontrar / passear
-    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei o joao') || text.includes('rolê') || text.includes('role') || text.includes('dar um role') || text.includes('dar um rolê') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('espairecer') || text.includes('bater perna')) {
+    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei o joao') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('espairecer') || text.includes('dar uma volta')) {
       const joaoSairList = [
-        `<p>Agradeço muito pelo convite, aceito com satisfação. Seria ótimo reservarmos um tempo para conversarmos e espairecer. Qual local e horário seriam mais convenientes para você?</p>`,
-        `<p>Com certeza, concordo plenamente. Podemos nos encontrar para uma refeição, uma ida ao shopping ou uma caminhada tranquila. O que você prefere?</p>`,
-        `<p>Excelente iniciativa. Gostaria muito de encontrar você. Por favor, indique onde e em qual horário podemos nos encontrar.</p>`,
-        `<p>Apoio a proposta. Um momento de diálogo e convivência é sempre muito bem-vindo. Quais são suas sugestões de atividade?</p>`
+        `<p>Agradeço muito pelo convite, aceito com satisfação! Uma pausa para conversarmos e tomarmos um café sempre faz muito bem. Qual local e horário seriam mais convenientes para você?</p>`,
+        `<p>Com certeza, concordo plenamente! Podemos nos encontrar para uma refeição, uma ida ao shopping ou uma caminhada tranquila. O que você prefere?</p>`,
+        `<p>Excelente iniciativa! Gostaria muito de encontrar você. Por favor, indique onde e em qual horário podemos marcar nosso encontro.</p>`
       ];
       return responseMemory.pick('joao_sair', joaoSairList);
     }
 
-    // Comida / Restaurante
+    // Comida / Restaurante / Lanche / Café
     if (text.includes('comer') || text.includes('fome') || text.includes('lanche') || text.includes('hambúrguer') || text.includes('hamburguer') || text.includes('pizza') || text.includes('açaí') || text.includes('acai') || text.includes('café') || text.includes('cafe') || text.includes('docinho') || text.includes('almoçar') || text.includes('almocar') || text.includes('jantar')) {
       const joaoFoodList = [
-        `<p>É uma excelente ideia. Fazer uma boa refeição e conversar é sempre reconfortante. Qual tipo de culinária ou restaurante você prefere para a ocasião?</p>`,
-        `<p>Concordo plenamente. Podemos tomar um café ou fazer uma refeição agradável. Conhece algum estabelecimento de sua preferência?</p>`,
-        `<p>Excelente sugestão. Uma boa conversa acompanhada de uma refeição é sempre bem-vinda. O que você gostaria de comer?</p>`
+        `<p>É uma excelente ideia! Fazer uma boa refeição acompanhada de um diálogo agradável é sempre muito proveitoso. Qual tipo de culinária ou restaurante você prefere para a ocasião?</p>`,
+        `<p>Concordo plenamente. Podemos tomar um café ou fazer uma boa refeição. Você conhece algum estabelecimento agradável de sua preferência?</p>`
       ];
       return responseMemory.pick('joao_food', joaoFoodList);
     }
 
-    // Tédio / "Sem nada para fazer"
-    if (text.includes('tédio') || text.includes('tedio') || text.includes('entediad') || text.includes('à toa') || text.includes('a toa') || text.includes('sem nada pra fazer') || text.includes('de bobeira') || text.includes('nada pra fazer')) {
-      const joaoTedioList = [
-        `<p>Compreendo a situação. Um momento de diálogo é uma excelente maneira de tornar o dia mais agradável e produtivo. Gostaria de sugerir alguma atividade ou conversar sobre algum tema?</p>`,
-        `<p>Momentos de ociosidade podem ser cansativos. O diálogo pode ser uma ótima alternativa para renovar as energias. O que você gostaria de fazer?</p>`
+    // Tempo / Clima / Novidades / Conversa casual
+    if (text.includes('tempo') || text.includes('clima') || text.includes('chuva') || text.includes('calor') || text.includes('frio') || text.includes('novidade') || text.includes('bater papo') || text.includes('vamos conversar') || text.includes('me conta')) {
+      const chatCasualList = [
+        `<p>Por aqui o dia segue com ritmo sereno e produtivo. Manter um diálogo agradável é uma das partes mais valorosas do cotidiano. O que você gostaria de comentar ou debater hoje?</p>`,
+        `<p>Tudo segue em ritmo tranquilo por aqui. Estou à sua inteira disposição para dialogarmos sobre o que desejar. Como está o clima e a sua cidade hoje?</p>`
       ];
-      return responseMemory.pick('joao_tedio', joaoTedioList);
+      return responseMemory.pick('joao_chat_casual', chatCasualList);
+    }
+
+    // Hobbies / Esporte / Livros / Música / Filmes
+    if (text.includes('música') || text.includes('musica') || text.includes('filme') || text.includes('série') || text.includes('serie') || text.includes('livro') || text.includes('ler') || text.includes('esporte') || text.includes('futebol') || text.includes('academia') || text.includes('treino') || text.includes('gosta de')) {
+      const hobbyList = [
+        `<p>Gosto muito de leituras sobre desenvolvimento pessoal, esportes e filmes com enredos inteligentes e bem estruturados. E você, qual atividade ou entretenimento tem apreciado ultimamente?</p>`,
+        `<p>Praticar atividades físicas e dedicar tempo a uma boa leitura traz clareza e equilíbrio ao nosso dia a dia. Você tem algum hobby favorito que costuma praticar?</p>`
+      ];
+      return responseMemory.pick('joao_hobby', hobbyList);
     }
 
     // Casa / Visita
     if (text.includes('minha casa') || text.includes('sua casa') || text.includes('aqui em casa') || text.includes('vem aqui') || text.includes('ir aí') || text.includes('ir ai') || text.includes('posso ir') || text.includes('quer vir')) {
       const joaoCasaList = [
-        `<p>Com certeza. Se for do seu agrado, posso me deslocar até sua residência no horário que você determinar, com total pontualidade.</p>`,
-        `<p>Você será muito bem-vinda(o) em minha casa se preferir. Fique inteiramente à vontade para escolher a opção mais confortável.</p>`
+        `<p>Com certeza. Se for do seu agrado e comodidade, posso me deslocar até sua residência no horário que você determinar, com total pontualidade.</p>`,
+        `<p>Você será muito bem-vinda(o) em minha casa se preferir. Fique inteiramente à vontade para escolher a opção que lhe proporcione maior conforto.</p>`
       ];
       return responseMemory.pick('joao_casa', joaoCasaList);
     }
@@ -1428,7 +1512,7 @@ function generateSpecializedAIResponse(rawText, persona) {
     if (text.includes('kkk') || text.includes('haha') || text.includes('rsrs') || text.includes('engraçad') || text.includes('engracad') || text.includes('rindo')) {
       const joaoLaughList = [
         `<p>Fico satisfeito em ver seu bom humor. É sempre muito positivo compartilhar momentos descontraídos e alegres.</p>`,
-        `<p>Aprecio sua disposição positiva. Momentos de descontração trazem leveza ao nosso dia a dia.</p>`
+        `<p>Aprecio sua disposição positiva. Momentos de descontração trazem leveza indispensável à nossa rotina.</p>`
       ];
       return responseMemory.pick('joao_laugh', joaoLaughList);
     }
@@ -1436,50 +1520,46 @@ function generateSpecializedAIResponse(rawText, persona) {
     // Saudades / Carinho
     if (text.includes('saudade') || text.includes('saudades') || text.includes('te amo') || text.includes('gosto de você') || text.includes('gosto muito')) {
       const joaoLoveList = [
-        `<p>Agradeço sinceramente pelas palavras gentis e pela estima. É recíproco o respeito e a consideração que tenho por nossa convivência.</p>`,
-        `<p>Muito obrigado pela consideração. Saiba que você pode contar com meu apoio e respeito contínuos.</p>`
+        `<p>Agradeço sinceramente pelas palavras gentis e pela estima. É recíproco o respeito, a amizade e a consideração que tenho por nossa convivência.</p>`,
+        `<p>Muito obrigado pela consideração. Saiba que você pode contar sempre com meu apoio, lealdade e respeito contínuos.</p>`
       ];
       return responseMemory.pick('joao_love', joaoLoveList);
     }
 
-    // Cumprimentos
-    if (text.includes('tudo bem') || text.includes('tudo bom') || text.includes('como vai') || text.includes('como cê tá')) {
-      const fineList = [
-        `<p>Tudo está em ordem por aqui, agradeço pela gentileza. E com você, como estão as coisas? Gostaria de conversar ou precisa de algum auxílio?</p>`,
-        `<p>Por aqui está tudo em paz e sob controle. Como tem sido o seu dia? Qualquer necessidade, estou à disposição.</p>`
+    // Confirmação / "Sim" / "Concordo" / "Verdade"
+    if (text === 'sim' || text === 'claro' || text === 'com certeza' || text === 'verdade' || text === 'exatamente' || text === 'concordo' || text === 'perfeito' || text === 'entendi' || text === 'legal' || text === 'bacana' || text === 'show' || text === 'ótimo' || text === 'otimo') {
+      const joaoAgreeList = [
+        `<p>Perfeito! Fico satisfeito que concordemos nesse ponto. É sempre muito construtivo alinhar pensamentos com você. Qual seria o próximo passo?</p>`,
+        `<p>Com certeza, estamos em pleno alinhamento. Esse consenso torna o diálogo muito enriquecedor. Sinta-se à vontade para prosseguir com suas colocações.</p>`
       ];
-      return responseMemory.pick('joao_fine', fineList);
+      return responseMemory.pick('joao_agree', joaoAgreeList);
     }
 
-    if (text === 'oi' || text === 'ola' || text === 'olá' || text === 'e ai' || text === 'e aí' || text.startsWith('oi ') || text.startsWith('fala')) {
-      const greetList = [
-        `<p>Olá, tudo bem com você? Estou à sua disposição. Como posso lhe auxiliar hoje?</p>`,
-        `<p>Olá, seja bem-vinda(o). É um prazer falar com você. Em que posso ser útil neste momento?</p>`
+    // Reclamação / Dúvida se ouviu
+    if (text.includes('não ouviu') || text.includes('nao ouviu') || text.includes('não me ouviu') || text.includes('nao me ouviu') || text.includes('não entendeu') || text.includes('nao entendeu') || text.includes('repetindo') || text.includes('mesma coisa') || text.includes('não tá prestando') || text.includes('nao ta prestando') || text.includes('falando que tá') || text.includes('falei pra gente') || text.includes('tô te chamando') || text.includes('to te chamando') || text.includes('escuta direito') || text.includes('você é burro')) {
+      const joaoReclamList = [
+        `<p>Peço escusas pelo equívoco na resposta anterior. Você tem toda razão e minha atenção está inteiramente concentrada em você agora. Por favor, prossiga e vamos combinar todos os pontos.</p>`,
+        `<p>Compreendo perfeitamente sua observação e peço desculpas pela falha anterior. Estou acompanhando com foco pleno; me conte suas preferências para prosseguirmos.</p>`
       ];
-      return responseMemory.pick('joao_greet', greetList);
-    }
-
-    // Onde você tá / Rotina
-    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('fazendo o que') || text.includes('tá fazendo') || text.includes('tá em casa') || text.includes('tá livre') || text.includes('tá ocupado')) {
-      return `<p>Estou em minha residência no momento, com a rotina sob controle. Caso necessite de apoio, companhia ou deseje conversar, estou plenamente à disposição.</p>`;
+      return responseMemory.pick('joao_reclam', joaoReclamList);
     }
 
     // Agradecimento
-    if (text.includes('obrigad') || text.includes('valeu') || text.includes('tamo junto')) {
-      return `<p>Não há de quê. É uma satisfação poder lhe oferecer apoio. Conte sempre com minha dedicação e respeito.</p>`;
+    if (text.includes('obrigad') || text.includes('valeu') || text.includes('agradeço')) {
+      return `<p>Não há de quê! É uma honra poder lhe oferecer apoio e companhia. Conte sempre com meu compromisso e consideração.</p>`;
     }
 
     // Despedida
-    if (text.includes('tchau') || text.includes('vou dormir') || text.includes('vou sair') || text.includes('depois falo') || text.includes('fui')) {
-      return `<p>Perfeito. Cuide-se com atenção e permaneça em segurança. Se precisar de qualquer orientação adicional, estou à disposição a qualquer momento. Tenha um excelente descanso.</p>`;
+    if (text.includes('tchau') || text.includes('vou dormir') || text.includes('vou sair') || text.includes('depois falo') || text.includes('fui') || text.includes('até mais') || text.includes('ate mais')) {
+      return `<p>Perfeito. Cuide-se com atenção e permaneça em segurança. Se precisar de qualquer orientação adicional, estou à disposição a qualquer momento. Tenha um excelente descanso!</p>`;
     }
 
-    // Genérico
+    // Genérico HUMANIZADO E ENGAJADOR
     const genericList = [
-      `<p>Compreendo perfeitamente o seu relato. Por favor, prossiga, estou acompanhando cada detalhe com total atenção e respeito.</p>`,
-      `<p>Entendi os pontos que você apresentou. Como você gostaria de proceder diante desse cenário?</p>`,
-      `<p>Estou acompanhando sua exposição com atenção. Sinta-se à vontade para compartilhar mais detalhes.</p>`,
-      `<p>Pode continuar com sua exposição. Permaneço atento para lhe oferecer a melhor orientação e apoio possíveis.</p>`
+      `<p>Compreendo com clareza a sua consideração e considero muito válida essa reflexão. Como você avalia os próximos passos sobre essa questão?</p>`,
+      `<p>É um ponto de vista muito sensato e bem ponderado. Dialogar com você é sempre bastante construtivo. O que mais você tem em mente sobre o assunto?</p>`,
+      `<p>Entendi com precisão sua colocação. Faz todo sentido sob essa ótica. Fique inteiramente à vontade para aprofundar suas reflexões.</p>`,
+      `<p>Concordo com suas ponderações. É uma satisfação acompanhar seus pensamentos e dialogar com serenidade. Gostaria de acrescentar mais algum detalhe?</p>`
     ];
     return responseMemory.pick('joao_generic', genericList);
   }
@@ -1862,26 +1942,43 @@ DIRETRIZES FUNDAMENTAIS PARA CONVERSAÇÃO FALADA NA CHAMADA:
 function generateCallFallbackResponse(rawText, persona) {
   const text = rawText.toLowerCase().trim();
 
-  // === 1. MARIA (VOZ / VÍDEO - APOIO FORMAL) ===
+  // === 1. MARIA (VOZ / VÍDEO - APOIO FORMAL E HUMANIZADO) ===
   if (persona === 'maria') {
-    // 1. Dúvida de áudio / escuta na chamada
-    if (text.includes('tá me ouvindo') || text.includes('ta me ouvindo') || text.includes('consegue me ouvir') || text.includes('me escuta') || text.includes('tô falando') || text.includes('to falando') || text.includes('alô tá aí') || text.includes('som som')) {
-      const audList = [
-        "Sim, estou ouvindo você perfeitamente e com clareza. Pode falar com tranquilidade.",
-        "Estou escutando com ótima qualidade de áudio. Por favor, sinta-se à vontade para relatar.",
-        "Estou na linha acompanhando com atenção. Pode prosseguir com o que deseja falar."
+    // 1. Cumprimentos e Saudações (Prioridade Máxima)
+    const isGreeting = (
+      text === 'oi' || text === 'ola' || text === 'olá' || text === 'alo' || text === 'alô' ||
+      text === 'oii' || text === 'oiii' || text === 'ei' || text === 'e ai' || text === 'e aí' ||
+      text === 'fala' || text === 'opa' || text.startsWith('oi ') || text.startsWith('olá ') ||
+      text.startsWith('ola ') || text.startsWith('alô ') || text.startsWith('bom dia') ||
+      text.startsWith('boa tarde') || text.startsWith('boa noite') || text.includes('saudações')
+    );
+    if (isGreeting) {
+      const greetList = [
+        "Olá! Tudo bem com você? Estou aqui na linha ouvindo perfeitamente. Como tem sido o seu dia?",
+        "Olá! É uma satisfação falar com você. Estou bem e à sua total disposição. Em que posso ser útil ou sobre o que gostaria de dialogar?",
+        "Olá! Que alegria falar com você. Pode falar com serenidade, estou acompanhando com atenção."
       ];
-      return responseMemory.pick('maria_call_aud', audList);
+      return responseMemory.pick('maria_call_greet', greetList);
     }
 
-    // 2. Ruído curto / corte / não entendeu
-    if (text.length <= 2 || text === 'hã' || text === 'ha' || text === 'ahn' || text === 'hum' || text === 'o que' || text === 'não entendi' || text === 'nao entendi' || text === 'como assim') {
-      const repeatList = [
-        "Houve uma breve oscilação na ligação. Você poderia, por gentileza, repetir a última frase?",
-        "Ocorreu uma pequena falha no áudio da linha. Por favor, repita o que você disse para que eu possa compreender.",
-        "Houve uma interrupção momentânea na transmissão. Poderia repetir suas últimas palavras, por favor?"
+    // 2. Bem-estar & "Tudo bem" / "Como você está"
+    if (text.includes('tudo bem') || text.includes('tudo bom') || text.includes('como você está') || text.includes('como vai') || text.includes('como você tá') || text.includes('como cê tá') || text.includes('tudo certo') || text.includes('tudo em ordem')) {
+      const fineList = [
+        "Tudo ótimo por aqui, muito obrigada pela gentileza de perguntar! E com você, como estão as coisas hoje? Espero que esteja tendo um dia agradável.",
+        "Tudo em perfeita paz por aqui. É sempre muito reconfortante falar com você. Como você está se sentindo hoje? Fique à vontade para me contar.",
+        "Por aqui tudo corre muito bem, agradeço a consideração. Me conte: como tem sido a sua semana? Tem alguma novidade?"
       ];
-      return responseMemory.pick('maria_call_rep', repeatList);
+      return responseMemory.pick('maria_call_fine', fineList);
+    }
+
+    // 3. Dúvida de áudio / escuta na chamada
+    if (text.includes('me ouvindo') || text.includes('consegue me ouvir') || text.includes('me escuta') || text.includes('falando') || text.includes('está aí') || text.includes('tá aí') || text.includes('som som')) {
+      const audList = [
+        "Sim, estou ouvindo você perfeitamente e com áudio límpido. Pode falar com tranquilidade.",
+        "Estou escutando com ótima qualidade. Por favor, sinta-se à vontade para relatar.",
+        "Sim, a transmissão está excelente. Estou na linha acompanhando com atenção."
+      ];
+      return responseMemory.pick('maria_call_aud', audList);
     }
 
     // 3. Reclamação / Dúvida se ouviu
@@ -1991,202 +2088,199 @@ function generateCallFallbackResponse(rawText, persona) {
       return responseMemory.pick('maria_call_no', noList);
     }
 
-    // 16. Cumprimentos
-    if (text === 'oi' || text === 'olá' || text === 'ola' || text === 'alô' || text === 'alo' || text === 'e aí' || text === 'e ai') {
-      const greetList = [
-        "Olá, tudo bem com você? Estou na linha à sua disposição, pode falar com calma.",
-        "Olá, boa ligação. Estou ouvindo com atenção, em que posso lhe ser útil?",
-        "Alô, estou na linha à sua disposição. Pode relatar o que necessitar."
-      ];
-      return responseMemory.pick('maria_call_greet', greetList);
-    }
-
-    // 17. Tudo bem?
-    if (text.includes('tudo bem') || text.includes('tudo bom') || text.includes('como você tá') || text.includes('como vai')) {
-      const fineList = [
-        "Tudo está em perfeita ordem por aqui, agradeço por perguntar. Como estão as coisas com você? Necessita de algum apoio ou orientação?",
-        "Tudo em paz comigo. Como você está se sentindo hoje? Fique à vontade para relatar suas impressões.",
-        "Por aqui está tudo bem. Estou na linha pronta para lhe ouvir com total atenção e respeito."
-      ];
-      return responseMemory.pick('maria_call_fine', fineList);
-    }
-
     // 18. Onde você tá / o que tá fazendo
-    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('onde cê tá') || text.includes('fazendo o que') || text.includes('tá livre') || text.includes('tá ocupada')) {
-      return "Estou em minha residência no momento, com a rotina organizada. Caso necessite de apoio, companhia ou deseje conversar, estou à disposição.";
+    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('onde cê tá') || text.includes('fazendo o que') || text.includes('tá livre') || text.includes('tá ocupada') || text.includes('sua rotina')) {
+      return "Estou em minha residência no momento, organizando minhas atividades e com total disponibilidade para nós conversarmos. E você, o que está fazendo de bom?";
     }
 
-    // 19. Agradecimento
+    // 19. Trabalho / Estudos / Cansaço / Dia corrido
+    if (text.includes('trabalh') || text.includes('estud') || text.includes('faculdade') || text.includes('escola') || text.includes('prova') || text.includes('cansad') || text.includes('dia corrido') || text.includes('sono') || text.includes('preguiça') || text.includes('rotina')) {
+      return "Compreendo muito bem. A rotina profissional e de estudos costuma exigir bastante dedicação e energia. É fundamental desacelerar um pouco. Como você está se sentindo agora?";
+    }
+
+    // 20. Opinião / Sugestão / "O que você acha"
+    if (text.includes('o que você acha') || text.includes('o que acha') || text.includes('qual sua opinião') || text.includes('concorda') || text.includes('acha uma boa') || text.includes('o que me diz') || text.includes('o que sugere')) {
+      return "Considero uma excelente reflexão. Acredito que, avaliando as opções com calma e serenidade, você tomará a melhor decisão. Quais caminhos você tem em mente?";
+    }
+
+    // 21. Tempo / Clima / Novidades / Conversa casual
+    if (text.includes('tempo') || text.includes('clima') || text.includes('chuva') || text.includes('calor') || text.includes('frio') || text.includes('novidade') || text.includes('bater papo') || text.includes('vamos conversar') || text.includes('me conta')) {
+      return "Por aqui o ambiente está muito agradável e o dia segue sereno. É sempre muito estimulante conversar com você. Me conte: quais são as novidades de hoje?";
+    }
+
+    // 22. Hobbies / Cultura / Música / Filmes
+    if (text.includes('música') || text.includes('musica') || text.includes('filme') || text.includes('série') || text.includes('serie') || text.includes('livro') || text.includes('ler') || text.includes('hobby') || text.includes('gosta de')) {
+      return "Aprecio muito uma boa leitura, músicas suaves e bons filmes que nos inspiram reflexão. E quais são as suas preferências culturais ou o que você tem acompanhado ultimamente?";
+    }
+
+    // 23. Agradecimento
     if (text.includes('obrigad') || text.includes('valeu') || text.includes('obrigada')) {
-      return "Não há de quê. É uma satisfação poder lhe oferecer apoio. Conte sempre com minha dedicação e respeito.";
+      return "Não há de quê! É uma honra e uma satisfação poder lhe oferecer apoio e companhia. Conte sempre com minha dedicação e respeito.";
     }
 
-    // 20. Despedida
-    if (text.includes('tchau') || text.includes('desligar') || text.includes('vou desligar') || text.includes('depois falo')) {
-      return "Perfeito. Cuide-se com atenção e permaneça em segurança. Se precisar de qualquer orientação adicional, sinta-se à vontade para ligar novamente. Até breve.";
+    // 24. Despedida
+    if (text.includes('tchau') || text.includes('desligar') || text.includes('vou desligar') || text.includes('depois falo') || text.includes('até mais') || text.includes('ate mais')) {
+      return "Perfeito. Cuide-se com atenção e permaneça em segurança. Se precisar de qualquer orientação adicional, sinta-se à vontade para ligar novamente. Até breve!";
     }
 
-    // 21. Conversa Geral
+    // 25. Ruído inaudível real (apenas se for interjeição vazia como 'hã', 'ahn', sem palavras com sentido)
+    if (text === 'hã' || text === 'ha' || text === 'ahn' || text === 'hum' || (cleanNoPunct.length === 0 && text.length > 0)) {
+      return "Com licença, não consegui escutar com nitidez o que você disse. Você se importaria de falar novamente, por gentileza?";
+    }
+
+    // 26. Conversa Geral Humanizada (reflexiva e acolhedora)
     const genList = [
-      "Compreendi perfeitamente o seu relato. Por favor, prossiga, estou ouvindo com total atenção e respeito.",
-      "Estou acompanhando cada ponto mencionado com bastante atenção. O que mais você gostaria de compartilhar?",
-      "Pode continuar no seu próprio tempo, estou acompanhando todas as informações que você apresenta.",
-      "Entendi as considerações que você relatou. Sinta-se à vontade para prosseguir com suas colocações."
+      "Compreendo perfeitamente sua colocação e acho muito interessante essa reflexão. O que mais você gostaria de comentar a respeito?",
+      "Faz muito sentido o que você apontou. É sempre muito enriquecedor conversar com você; me conte mais sobre como você enxerga essa questão.",
+      "Entendo sua perspectiva e valorizo muito sua consideração. Como você está planejando conduzir essa situação?",
+      "Concordo com os pontos que você destacou. Ter essa oportunidade de conversarmos com calma é muito agradável. Fique à vontade para aprofundar suas impressões."
     ];
     return responseMemory.pick('maria_call_gen', genList);
   }
 
-  // === 2. JOÃO (VOZ / VÍDEO - APOIO FORMAL E PROTETOR) ===
+  // === 2. JOÃO (VOZ / VÍDEO - APOIO FORMAL, PROTETOR E HUMANIZADO) ===
   if (persona === 'joao') {
-    // 1. Dúvida de áudio / escuta na chamada
-    if (text.includes('tá me ouvindo') || text.includes('ta me ouvindo') || text.includes('consegue me ouvir') || text.includes('me escuta') || text.includes('tô falando') || text.includes('to falando') || text.includes('alô tá aí')) {
+    // 1. Cumprimentos e Saudações (Prioridade Máxima)
+    const isGreeting = (
+      text === 'oi' || text === 'ola' || text === 'olá' || text === 'alo' || text === 'alô' ||
+      text === 'oii' || text === 'oiii' || text === 'ei' || text === 'e ai' || text === 'e aí' ||
+      text === 'fala' || text === 'opa' || text.startsWith('oi ') || text.startsWith('olá ') ||
+      text.startsWith('ola ') || text.startsWith('alô ') || text.startsWith('bom dia') ||
+      text.startsWith('boa tarde') || text.startsWith('boa noite') || text.includes('saudações')
+    );
+    if (isGreeting) {
+      const greetList = [
+        "Olá! Tudo bem com você? É uma satisfação atender ao seu contato. Como tem passado?",
+        "Olá! Estou na linha com áudio nítido e à sua inteira disposição. Como estão as coisas com você hoje?",
+        "Olá! Que satisfação falar contigo. Estou pronto para conversar com atenção e respeito. O que você gostaria de compartilhar?"
+      ];
+      return responseMemory.pick('joao_call_greet', greetList);
+    }
+
+    // 2. Bem-estar & "Tudo bem" / "Como você está"
+    if (text.includes('tudo bem') || text.includes('tudo bom') || text.includes('como você está') || text.includes('como vai') || text.includes('como você tá') || text.includes('como cê tá') || text.includes('tudo certo') || text.includes('tudo em ordem')) {
+      const fineList = [
+        "Tudo excelente por aqui, muito obrigado pela gentileza de perguntar! E com você, como estão as coisas hoje? Está tudo correndo em paz?",
+        "Tudo em perfeita ordem por aqui, graças a Deus. Como você está se sentindo? Fique inteiramente à vontade para me contar.",
+        "Por aqui tudo muito bem e produtivo. Fico grato pelo contato. Como tem sido a sua rotina recentemente?"
+      ];
+      return responseMemory.pick('joao_call_fine', fineList);
+    }
+
+    // 3. Dúvida de áudio / escuta na chamada
+    if (text.includes('me ouvindo') || text.includes('consegue me ouvir') || text.includes('me escuta') || text.includes('falando') || text.includes('está aí') || text.includes('tá aí') || text.includes('som som')) {
       const audList = [
-        "Sim, estou ouvindo você perfeitamente e com áudio límpido. Pode falar com tranquilidade.",
-        "Estou escutando com total clareza. Por favor, sinta-se à vontade para expor a situação.",
-        "Estou na linha acompanhando com atenção. Pode prosseguir com o que deseja falar."
+        "Sim, estou ouvindo você perfeitamente e com áudio cristalino. Pode falar com tranquilidade.",
+        "O áudio está ótimo por aqui. Estou com foco pleno em suas palavras, sinta-se confortável para falar.",
+        "Sim, confirmo que o som está límpido. Estou na linha acompanhando cada colocação sua."
       ];
       return responseMemory.pick('joao_call_aud', audList);
     }
 
-    // 2. Ruído curto / corte / não entendeu
-    if (text.length <= 2 || text === 'hã' || text === 'ha' || text === 'ahn' || text === 'hum' || text === 'o que' || text === 'não entendi' || text === 'nao entendi') {
-      const repeatList = [
-        "Houve uma pequena oscilação no áudio da ligação. Por gentileza, poderia repetir a última frase?",
-        "Ocorreu uma leve interferência na linha. Por favor, repita suas palavras para que eu possa compreender com precisão.",
-        "A conexão oscilou por um breve instante. Peço a gentileza de repetir sua colocação."
-      ];
-      return responseMemory.pick('joao_call_rep', repeatList);
-    }
-
-    // 3. Reclamação / Dúvida se ouviu
-    if (text.includes('não ouviu') || text.includes('nao ouviu') || text.includes('não me ouviu') || text.includes('nao me ouviu') || text.includes('não entendeu') || text.includes('nao entendeu') || text.includes('repetindo') || text.includes('mesma coisa') || text.includes('não tá prestando') || text.includes('nao ta prestando') || text.includes('falando que tá') || text.includes('falei pra gente') || text.includes('tô te chamando') || text.includes('to te chamando') || text.includes('escuta direito') || text.includes('você é burro')) {
-      const joaoReclamList = [
-        "Peço escusas pelo equívoco anterior. Compreendi perfeitamente o que você mencionou sobre o convite para sairmos e estou com atenção plena. Vamos combinar o encontro.",
-        "Compreendo sua observação e peço desculpas pela resposta anterior. Estou acompanhando com foco absoluto, por favor prossiga com suas preferências.",
-        "Peço desculpas pela breve desatenção. Agora estou com foco pleno em sua mensagem. Onde você gostaria de nos encontrarmos?"
-      ];
-      return responseMemory.pick('joao_call_reclam', joaoReclamList);
-    }
-
-    // 4. Convite para sair / encontrar / passear
-    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei o joao') || text.includes('rolê') || text.includes('role') || text.includes('dar um role') || text.includes('dar um rolê') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('dar uma volta') || text.includes('espairecer') || text.includes('bater perna')) {
+    // 4. Convite para sair / encontrar / passear / café / shopping
+    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei o joao') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('espairecer') || text.includes('dar uma volta')) {
       const joaoSairList = [
-        "Agradeço muito pelo convite, aceito com satisfação. Seria ótimo reservarmos um tempo para conversarmos e espairecer. Qual local e horário seriam mais convenientes para você?",
-        "Com certeza, concordo plenamente. Podemos nos encontrar para uma refeição, uma ida ao cinema ou uma caminhada tranquila. O que você prefere?",
-        "Excelente iniciativa. Gostaria muito de encontrar você. Por favor, indique onde e em qual horário podemos nos encontrar.",
-        "Apoio a proposta. Um momento de diálogo e convivência é sempre muito bem-vindo. Quais são suas sugestões de atividade?",
-        "Com certeza. Por favor, informe o local e horário de encontro para que eu possa me organizar pontualmente."
+        "Agradeço muito pelo convite, aceito com satisfação! Uma pausa para conversarmos e tomarmos um café sempre faz muito bem. Qual local e horário seriam mais convenientes para você?",
+        "Com certeza, concordo plenamente! Podemos nos encontrar para uma refeição, uma ida ao shopping ou uma caminhada tranquila. O que você prefere?",
+        "Excelente iniciativa! Gostaria muito de encontrar você. Por favor, indique onde e em qual horário podemos marcar nosso encontro."
       ];
       return responseMemory.pick('joao_call_sair', joaoSairList);
     }
 
-    // 5. Comida / Restaurante
+    // 5. Comida / Restaurante / Lanche / Café / Almoço
     if (text.includes('comer') || text.includes('fome') || text.includes('lanche') || text.includes('hambúrguer') || text.includes('hamburguer') || text.includes('pizza') || text.includes('açaí') || text.includes('acai') || text.includes('café') || text.includes('cafe') || text.includes('docinho') || text.includes('almoçar') || text.includes('almocar') || text.includes('jantar')) {
       const joaoFoodList = [
-        "É uma excelente ideia. Fazer uma boa refeição e conversar é sempre reconfortante. Qual tipo de culinária ou restaurante você prefere para a ocasião?",
-        "Concordo plenamente. Podemos fazer uma refeição agradável em um local de sua preferência. O que você gostaria de comer?",
-        "Excelente sugestão. Uma boa conversa acompanhada de uma refeição é sempre bem-vinda. Que estabelecimento você recomenda?"
+        "É uma excelente ideia! Fazer uma boa refeição acompanhada de um diálogo agradável é sempre muito proveitoso. Qual tipo de culinária ou restaurante você prefere para a ocasião?",
+        "Concordo plenamente. Podemos tomar um café ou fazer uma refeição agradável. Você conhece algum estabelecimento de sua preferência?"
       ];
       return responseMemory.pick('joao_call_food', joaoFoodList);
     }
 
-    // 6. Tédio / "Sem nada para fazer"
-    if (text.includes('tédio') || text.includes('tedio') || text.includes('entediad') || text.includes('à toa') || text.includes('a toa') || text.includes('sem nada pra fazer') || text.includes('de bobeira') || text.includes('nada pra fazer')) {
-      const joaoTedioList = [
-        "Compreendo a situação. Um momento de diálogo é uma excelente maneira de tornar o dia mais agradável e produtivo. Gostaria de sugerir alguma atividade?",
-        "Momentos de ociosidade podem ser cansativos. O diálogo pode ser uma ótima alternativa para renovar as energias. O que você gostaria de fazer?"
-      ];
-      return responseMemory.pick('joao_call_tedio', joaoTedioList);
+    // 6. Onde você tá / Rotina / O que está fazendo
+    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('onde cê tá') || text.includes('fazendo o que') || text.includes('tá fazendo') || text.includes('tá em casa') || text.includes('tá livre') || text.includes('tá ocupado') || text.includes('sua rotina')) {
+      return "Estou em minha residência no momento, adiantando algumas leituras e tarefas cotidianas, mas com total disponibilidade para conversarmos. E por aí, o que você tem feito de bom?";
     }
 
-    // 7. Casa / Visita
-    if (text.includes('minha casa') || text.includes('sua casa') || text.includes('aqui em casa') || text.includes('vem aqui') || text.includes('ir aí') || text.includes('ir ai') || text.includes('posso ir') || text.includes('quer vir')) {
-      const joaoCasaList = [
-        "Com certeza. Se for conveniente para você, posso me deslocar até sua residência no horário que você determinar, com total pontualidade.",
-        "Você será muito bem-vinda(o) em minha casa se preferir. Fique inteiramente à vontade para escolher a opção mais confortável."
-      ];
-      return responseMemory.pick('joao_call_casa', joaoCasaList);
+    // 7. Trabalho / Estudos / Cansaço / Dia intenso
+    if (text.includes('trabalh') || text.includes('estud') || text.includes('faculdade') || text.includes('escola') || text.includes('prova') || text.includes('cansad') || text.includes('dia corrido') || text.includes('sono') || text.includes('preguiça') || text.includes('rotina')) {
+      return "Compreendo perfeitamente. A rotina profissional e acadêmica frequentemente exige muito foco e resiliência. O importante é saber dosar o esforço e descansar adequadamente. Como você está se sentindo agora?";
     }
 
-    // 8. Risada / Humor
-    if (text.includes('kkk') || text.includes('haha') || text.includes('rsrs') || text.includes('engraçad') || text.includes('engracad') || text.includes('rindo')) {
-      const joaoLaughList = [
-        "Fico satisfeito em ver seu bom humor. É sempre muito positivo compartilhar momentos descontraídos e alegres.",
-        "Aprecio sua disposição positiva. Momentos de descontração trazem leveza ao nosso dia a dia."
-      ];
-      return responseMemory.pick('joao_call_laugh', joaoLaughList);
+    // 8. Opinião / Sugestão / "O que você acha"
+    if (text.includes('o que você acha') || text.includes('o que acha') || text.includes('qual sua opinião') || text.includes('concorda') || text.includes('acha uma boa') || text.includes('o que me diz') || text.includes('o que sugere')) {
+      return "Acho uma ponderação muito pertinente e sensata. Analisar os prós e contras com calma nos proporciona maior segurança em qualquer decisão. Qual alternativa mais agrada a você neste momento?";
     }
 
-    // 9. Saudades / Carinho
+    // 9. Tempo / Clima / Novidades / Conversa casual
+    if (text.includes('tempo') || text.includes('clima') || text.includes('chuva') || text.includes('calor') || text.includes('frio') || text.includes('novidade') || text.includes('bater papo') || text.includes('vamos conversar') || text.includes('me conta')) {
+      return "Por aqui o dia segue com ritmo sereno e produtivo. Manter um diálogo agradável é uma das partes mais valorosas do cotidiano. O que você gostaria de comentar ou debater hoje?";
+    }
+
+    // 10. Hobbies / Esporte / Livros / Música / Filmes
+    if (text.includes('música') || text.includes('musica') || text.includes('filme') || text.includes('série') || text.includes('serie') || text.includes('livro') || text.includes('ler') || text.includes('esporte') || text.includes('futebol') || text.includes('academia') || text.includes('treino') || text.includes('gosta de')) {
+      return "Gosto muito de leituras sobre desenvolvimento pessoal, esportes e filmes com enredos bem estruturados. E você, qual atividade ou entretenimento tem apreciado ultimamente?";
+    }
+
+    // 11. Confirmação / "Sim" / "Concordo" / "Verdade" / "Perfeito"
+    if (text === 'sim' || text === 'claro' || text === 'com certeza' || text === 'verdade' || text === 'exatamente' || text === 'concordo' || text === 'perfeito' || text === 'entendi' || text === 'legal' || text === 'bacana' || text === 'show' || text === 'ótimo' || text === 'otimo') {
+      const yesList = [
+        "Perfeito! Fico satisfeito que concordemos nesse ponto. É sempre muito construtivo alinhar pensamentos com você. Qual seria o próximo passo?",
+        "Com certeza, estamos em pleno alinhamento. Esse consenso torna o diálogo muito enriquecedor. Sinta-se à vontade para prosseguir com suas colocações."
+      ];
+      return responseMemory.pick('joao_call_yes', yesList);
+    }
+
+    // 12. Saudades / Carinho
     if (text.includes('saudade') || text.includes('saudades') || text.includes('te amo') || text.includes('gosto de você') || text.includes('gosto muito')) {
-      const joaoLoveList = [
-        "Agradeço sinceramente pelas palavras gentis e pela estima. É recíproco o respeito e a consideração que tenho por você.",
-        "Muito obrigado pela consideração. Saiba que você pode contar com meu apoio e respeito contínuos."
-      ];
-      return responseMemory.pick('joao_call_love', joaoLoveList);
+      return "Agradeço sinceramente pelas palavras gentis e pela estima. É recíproco o respeito, a amizade e a consideração que tenho por nossa convivência.";
     }
 
-    // 10. Emergência policial / socorro / viatura
+    // 13. Emergência policial / socorro / viatura
     if (text.includes('socorro') || text.includes('perigo') || text.includes('viatura') || text.includes('policia') || text.includes('polícia')) {
       return "Mantenha a calma e permaneça em local seguro. A viatura policial do 190 foi acionada para suas coordenadas e estou na linha com você.";
     }
 
-    // 11. Abuso / agressão
+    // 14. Abuso / agressão
     if (text.includes('abusad') || text.includes('abuso') || text.includes('estupr') || text.includes('me bateu') || text.includes('atacou')) {
       return "Mantenha a calma e respire pausadamente. Você não tem culpa alguma sobre esse fato lamentável. A Polícia Militar foi acionada com prioridade e permanecerei na linha até você estar em segurança.";
     }
 
-    // 12. Perigo na rua / stalker
+    // 15. Perigo na rua / stalker
     if (text.includes('seguindo') || text.includes('estranho') || text.includes('rua escura') || text.includes('suspeito')) {
       return "Mantenha o passo firme. Entre imediatamente no primeiro estabelecimento comercial ou local movimentado e informe suas coordenadas para acionarmos o 190.";
     }
 
-    // 13. Medo / Pânico / Ansiedade
+    // 16. Medo / Pânico / Ansiedade
     if (text.includes('medo') || text.includes('pânico') || text.includes('panico') || text.includes('ansied') || text.includes('tremend')) {
       return "Mantenha a calma e respire pausadamente. Estou acompanhando você e garantiremos sua segurança. Informe onde você se encontra exatamente.";
     }
 
-    // 14. Sim / Confirmação
-    if (text === 'sim' || text === 'aham' || text === 'isso' || text === 'é isso' || text === 'tá bom') {
-      return "Compreendi perfeitamente. E quais são as providências que você gostaria de adotar agora? Estou à disposição.";
+    // 17. Reclamação / Dúvida se ouviu
+    if (text.includes('não ouviu') || text.includes('nao ouviu') || text.includes('não me ouviu') || text.includes('nao me ouviu') || text.includes('não entendeu') || text.includes('nao entendeu') || text.includes('repetindo') || text.includes('mesma coisa') || text.includes('não tá prestando') || text.includes('nao ta prestando') || text.includes('falando que tá') || text.includes('falei pra gente') || text.includes('tô te chamando') || text.includes('to te chamando') || text.includes('escuta direito') || text.includes('você é burro')) {
+      return "Peço escusas pelo equívoco anterior. Você tem toda razão e meu foco está inteiramente em suas palavras. Por favor, continue, estou ouvindo com máxima clareza.";
     }
 
-    // 15. Não / Incerteza
-    if (text === 'não' || text === 'nao' || text.includes('não sei') || text.includes('nao sei')) {
-      return "Compreendo. Não há necessidade de pressa, podemos avaliar as alternativas com serenidade.";
+    // 18. Agradecimento
+    if (text.includes('obrigad') || text.includes('valeu') || text.includes('agradeço')) {
+      return "Não há de quê! É uma honra poder lhe oferecer apoio e companhia. Conte sempre com meu compromisso e consideração.";
     }
 
-    // 16. Cumprimentos
-    if (text === 'oi' || text === 'olá' || text === 'ola' || text === 'alô' || text === 'alo' || text === 'e aí' || text === 'e ai') {
-      return "Olá, tudo bem com você? Estou na linha à sua disposição, pode falar com calma.";
+    // 19. Despedida
+    if (text.includes('tchau') || text.includes('desligar') || text.includes('vou desligar') || text.includes('depois falo') || text.includes('até mais') || text.includes('ate mais')) {
+      return "Perfeito. Cuide-se com atenção e permaneça em segurança. Se precisar de qualquer orientação adicional, estou à disposição. Tenha um excelente descanso!";
     }
 
-    // 17. Tudo bem?
-    if (text.includes('tudo bem') || text.includes('tudo bom') || text.includes('como você tá') || text.includes('como vai')) {
-      return "Tudo está em ordem por aqui, agradeço pela gentileza. E com você, como estão as coisas? Gostaria de conversar ou precisa de algum auxílio?";
+    // 20. Ruído inaudível real (apenas se for interjeição vazia como 'hã', 'ahn', sem palavras com sentido)
+    if (text === 'hã' || text === 'ha' || text === 'ahn' || text === 'hum' || (cleanNoPunct.length === 0 && text.length > 0)) {
+      return "Desculpe-me, não ouvi com nitidez o que você disse. Poderia repetir para que eu possa lhe acompanhar, por gentileza?";
     }
 
-    // 18. Onde você tá / o que tá fazendo
-    if (text.includes('onde você tá') || text.includes('onde ce ta') || text.includes('onde cê tá') || text.includes('fazendo o que') || text.includes('tá livre') || text.includes('tá ocupado')) {
-      return "Estou em minha residência no momento, com a rotina sob controle. Caso necessite de apoio ou deseje conversar, estou à disposição.";
-    }
-
-    // 19. Agradecimento
-    if (text.includes('obrigad') || text.includes('valeu')) {
-      return "Não há de quê. Estou sempre à disposição para oferecer apoio e colaboração. Conte com meu compromisso e respeito.";
-    }
-
-    // 20. Despedida
-    if (text.includes('tchau') || text.includes('desligar') || text.includes('vou desligar') || text.includes('depois falo')) {
-      return "Perfeito. Cuide-se com atenção e permaneça em segurança. Se precisar de qualquer orientação adicional, estou à disposição. Tenha um excelente descanso.";
-    }
-
-    // 21. Genérico do João
+    // 21. Genérico do João (humanizado, reflexivo e seguro)
     const genList = [
-      "Compreendo perfeitamente o seu relato. Por favor, prossiga, estou acompanhando cada detalhe com atenção e respeito.",
-      "Entendi as considerações que você apresentou. Como você gostaria de proceder diante desse cenário?",
-      "Estou acompanhando sua exposição de forma atenta. Sinta-se à vontade para compartilhar mais detalhes.",
-      "Pode continuar com sua exposição. Permaneço atento para lhe oferecer a melhor orientação e apoio possíveis."
+      "Compreendo com clareza a sua consideração e considero muito válida essa reflexão. Como você avalia os próximos passos sobre essa questão?",
+      "É um ponto de vista muito sensato e bem ponderado. Dialogar com você é sempre bastante construtivo. O que mais você tem em mente sobre o assunto?",
+      "Entendi com precisão sua colocação. Faz todo sentido sob essa ótica. Fique inteiramente à vontade para aprofundar suas reflexões.",
+      "Concordo com suas ponderações. É uma satisfação acompanhar seus pensamentos e dialogar com serenidade. Gostaria de acrescentar mais algum detalhe?"
     ];
     return responseMemory.pick('joao_call_gen', genList);
   }
