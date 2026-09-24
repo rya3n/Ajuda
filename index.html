@@ -234,23 +234,23 @@
         <!-- Chips Rápidos Especializados (Foco em Abuso Sexual & Envio de Localização) -->
         <div class="chat-quick-chips" id="quickChipsBar">
           <!-- BOTÃO EM DESTAQUE DE ENVIO DE LOCALIZAÇÃO AO AMIGO -->
-          <button class="quick-chip chip-sos btn-loc-highlight" onclick="sendLocationToFriend()" title="Manda sua localização para seu amigo acionar a polícia agora">
-            📍 Mandar minha localização para meu amigo chamar a polícia!
+          <button class="quick-chip chip-sos btn-loc-highlight" onclick="sendLocationToFriend()" title="Enviar localização imediata para acionamento das autoridades policiais">
+            📍 Enviar minha localização para acionar apoio policial
           </button>
-          <button class="quick-chip chip-sos" onclick="sendQuickMessage('Fui abusada agora e estou em perigo!')">
-            🚨 Fui abusada agora, socorro!
+          <button class="quick-chip chip-sos" onclick="sendQuickMessage('Sofri violência/abuso agora e necessito de ajuda urgente!')">
+            🚨 Sofri violência/abuso agora, preciso de ajuda!
           </button>
-          <button class="quick-chip" onclick="sendQuickMessage('O que preciso tomar nas primeiras 72 horas? (PEP / Gravidez)')">
-            ⏱️ Remédios nas primeiras 72h (PEP)
+          <button class="quick-chip" onclick="sendQuickMessage('Quais medicamentos de profilaxia de emergência preciso tomar nas primeiras 72 horas? (PEP)')">
+            ⏱️ Medicamentos de emergência em até 72h (PEP)
           </button>
-          <button class="quick-chip" onclick="sendQuickMessage('Acho que colocaram algo na minha bebida (fui dopada)')">
-            🧪 Acho que colocaram algo na bebida
+          <button class="quick-chip" onclick="sendQuickMessage('Suspeito que colocaram alguma substância em minha bebida (adulteração)')">
+            🧪 Suspeita de substância na bebida (adulteração)
           </button>
-          <button class="quick-chip" onclick="sendQuickMessage('Estou em choque e tendo uma crise de pânico')">
-            😰 Estou em choque / crise de pânico
+          <button class="quick-chip" onclick="sendQuickMessage('Estou em estado de choque e enfrentando forte ansiedade')">
+            😰 Estou em estado de choque / crise de ansiedade
           </button>
-          <button class="quick-chip" onclick="sendQuickMessage('Tenho medo de denunciar o agressor')">
-            🛡️ Tenho medo de denunciar
+          <button class="quick-chip" onclick="sendQuickMessage('Tenho receio de efetuar a denúncia contra o agressor')">
+            🛡️ Receio de denunciar o agressor
           </button>
         </div>
 
@@ -264,9 +264,9 @@
           <input 
             type="text" 
             id="chatInput" 
-            placeholder="Pode desabafar ou pedir socorro, seu amigo(a) está ouvindo..." 
+            placeholder="Digite sua mensagem com tranquilidade, este canal é seguro e sigiloso..." 
             autocomplete="off"
-            aria-label="Mensagem para o amigo"
+            aria-label="Mensagem para o interlocutor"
             autofocus
           >
           
@@ -320,7 +320,7 @@
           </button>
         </div>
         <p class="transcript-text" id="callTranscriptText">
-          "Estou aqui com você na linha! Me diz onde você está ou aperta no botão de mandar localização que eu chamo a polícia agora!"
+          "Estou na linha à sua disposição. Por favor, relate sua situação ou envie sua localização para acionamento de suporte."
         </p>
 
         <!-- Transcrição do que o usuário acabou de falar -->
@@ -332,20 +332,20 @@
 
       <!-- Input discreto caso o usuário precise digitar em silêncio durante a ligação -->
       <form class="call-silent-input-box" onsubmit="handleCallSilentSubmit(event)">
-        <input type="text" id="callSilentInput" placeholder="Não pode falar alto? Digite aqui na ligação..." autocomplete="off">
+        <input type="text" id="callSilentInput" placeholder="Não pode falar em voz alta? Digite aqui na ligação..." autocomplete="off">
         <button type="submit" title="Enviar resposta silenciosa">Enviar</button>
       </form>
 
       <!-- Ações rápidas na chamada -->
       <div class="call-quick-prompts">
         <button class="call-prompt-btn" onclick="sendLocationToFriend(); closeVoiceCallModal();">
-          📍 Mandar Meu Local e Chamar Polícia
+          📍 Enviar Localização e Acionar Apoio Policial
         </button>
         <button class="call-prompt-btn" onclick="counselorSpeakTopic('calma')">
-          🌿 "Me acalma, por favor"
+          🌿 "Solicitar exercício de calma e respiração"
         </button>
         <button class="call-prompt-btn" onclick="counselorSpeakTopic('pep')">
-          ⏱️ "O que tomar no hospital (PEP)?"
+          ⏱️ "Orientações sobre profilaxia hospitalar (PEP)"
         </button>
       </div>
 
@@ -387,7 +387,7 @@
         <!-- Indicador de Status da Vídeo Chamada -->
         <div class="video-status-indicator" id="videoStatusIndicator">
           <span class="pulse-dot"></span>
-          <span id="videoStatusLabel">🎙️ Te ouvindo ao vivo... pode falar</span>
+          <span id="videoStatusLabel">🎙️ Ouvindo atentamente... pode falar</span>
         </div>
 
         <!-- Barra de Legendas Dupla (Usuário + IA) -->
@@ -399,14 +399,14 @@
           <div class="video-counselor-speech">
             <span class="subtitles-icon">💬</span>
             <p class="subtitles-content" id="videoSubtitleContent">
-              "Oi amiga, que alívio te ver. Respire no seu tempo, estou com você e não vou soltar sua mão."
+              "Olá, é um prazer falar com você. Respire no seu próprio tempo, estou aqui para lhe ouvir e prestar todo o suporte necessário."
             </p>
           </div>
         </div>
 
         <!-- Input discreto na vídeo chamada -->
         <form class="video-silent-form" onsubmit="handleVideoSilentSubmit(event)">
-          <input type="text" id="videoSilentInput" placeholder="Digite discretamente se não puder falar..." autocomplete="off">
+          <input type="text" id="videoSilentInput" placeholder="Digite discretamente caso não possa falar em voz alta..." autocomplete="off">
           <button type="submit">Enviar</button>
         </form>
 
