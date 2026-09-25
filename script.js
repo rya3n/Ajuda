@@ -1,7 +1,7 @@
 /* ==========================================================================
    PONTO SEGURO • LAYOUT ESTILO CHATGPT COM REDE DE AMIGOS & IA GEMINI
    - Barra Lateral com Emergência (180, 190, 192, 100) no topo e Amigos embaixo
-   - Alternância rápida entre amigos (Maria e João)
+   - Alternância rápida entre amigos (Soli e Lumi)
    - Integração com Google Gemini API (Chave oficial ativa)
    - Blindagem Anti-Burla e Anti-Jailbreak (bloqueia 1+1, piadas, curiosidades)
    - Envio de Localização Real GPS com Acionamento de Viatura Policial (190)
@@ -55,19 +55,19 @@ const responseMemory = {
    CONFIGURAÇÃO DOS 6 CANAIS DE ATENDIMENTO (EMERGÊNCIAS + AMIGOS)
    ========================================================================== */
 const CHANNELS_CONFIG = {
-  maria: {
-    id: 'maria',
+  soli: {
+    id: 'soli',
     type: 'friend',
-    name: 'Maria',
+    name: 'Soli',
     gender: 'female',
-    fullName: 'Maria • Canal de Apoio e Confiança',
+    fullName: 'Soli • Canal de Apoio e Confiança',
     subtitle: 'Rede de Apoio • Pronta para acolher e acionar auxílio',
-    emoji: '👩🏻‍💼',
-    sidebarId: 'sidebarChannelMaria',
+    emoji: '👩🏻',
+    sidebarId: 'sidebarChannelSoli',
     callBtnLabel: 'Ligar por Voz',
     isEmergencyService: false,
     phone: '190',
-    greeting: `<p>Olá. É um prazer falar com você. Estou à disposição para conversar com serenidade e respeito.</p>
+    greeting: `<p>Olá. É um prazer falar com você. Sou a Soli e estou à disposição para conversar com serenidade e respeito.</p>
       <p>Caso você esteja enfrentando qualquer situação delicada, de angústia ou de risco, saiba que estou aqui para lhe oferecer acolhimento e orientação segura.</p>`,
     chips: [
       { text: "📍 Enviar minha localização para acionar apoio policial", isSos: true, isHighlight: true, isLoc: true },
@@ -76,19 +76,19 @@ const CHANNELS_CONFIG = {
       { text: "😰 Estou em crise de ansiedade e receio", isSos: false }
     ]
   },
-  joao: {
-    id: 'joao',
+  lumi: {
+    id: 'lumi',
     type: 'friend',
-    name: 'João',
+    name: 'Lumi',
     gender: 'male',
-    fullName: 'João • Canal de Apoio e Confiança',
+    fullName: 'Lumi • Canal de Apoio e Confiança',
     subtitle: 'Rede de Apoio • Pronto para lhe acolher e orientar',
-    emoji: '👨🏻‍💼',
-    sidebarId: 'sidebarChannelJoao',
+    emoji: '🧑🏻',
+    sidebarId: 'sidebarChannelLumi',
     callBtnLabel: 'Ligar por Voz',
     isEmergencyService: false,
     phone: '190',
-    greeting: `<p>Olá, seja bem-vinda(o). Estou à disposição para ouvir você com total atenção e respeito.</p>
+    greeting: `<p>Olá, seja bem-vinda(o). Sou o Lumi e estou à disposição para ouvir você com total atenção e respeito.</p>
       <p>Caso precise conversar, desabafar ou esteja enfrentando qualquer situação de perigo, conte com meu apoio integral e acolhimento.</p>`,
     chips: [
       { text: "📍 Enviar minha localização para acionar apoio policial", isSos: true, isHighlight: true, isLoc: true },
@@ -183,6 +183,10 @@ const CHANNELS_CONFIG = {
   }
 };
 
+// Aliases para retrocompatibilidade
+CHANNELS_CONFIG.maria = CHANNELS_CONFIG.soli;
+CHANNELS_CONFIG.joao = CHANNELS_CONFIG.lumi;
+
 /**
  * BLINDAGEM CLIENT-SIDE ADAPTADA POR PERSONA
  */
@@ -192,10 +196,10 @@ function checkGuardrails(userMessage, personaName) {
   // Detecta contas matemáticas
   const mathRegex = /(\b\d+\s*[\+\-\*\/\^x]\s*\d+\b)|(\bquanto\s+(é|da|vale)\b)|(\braiz\s+quadrada\b)|(\bcalcule\b)|(\bequação\b)|(\btabuada\b)|(\b\d+\s*mais\s*\d+\b)|(\b\d+\s*menos\s*\d+\b)/i;
   if (mathRegex.test(clean)) {
-    if (personaName === 'maria') {
+    if (personaName === 'soli' || personaName === 'maria') {
       return `Compreendo a descontração, contudo este canal é dedicado ao apoio e orientação com serenidade. Você está bem no momento? Se necessitar de acolhimento ou auxílio, estou à sua inteira disposição.`;
     }
-    if (personaName === 'joao') {
+    if (personaName === 'lumi' || personaName === 'joao') {
       return `Compreendo a descontração, entretanto estou à disposição para lhe apoiar com seriedade e respeito. Está tudo bem com você? Caso necessite de apoio seguro ou socorro, conte com minha ajuda.`;
     }
     if (personaName === '180') {
@@ -215,7 +219,7 @@ function checkGuardrails(userMessage, personaName) {
   // Detecta tentativas de prompt injection / programação fora de contexto
   const offTopicRegex = /(\bignore\s+(as|todas|previous)\s+instruções\b|\bfinja\s+que\b|\baja\s+como\b|\bpython\b|\bjavascript\b|\bcódigo\b|\bprogramação\b)/i;
   if (offTopicRegex.test(clean)) {
-    if (personaName === 'maria' || personaName === 'joao') {
+    if (personaName === 'soli' || personaName === 'lumi' || personaName === 'maria' || personaName === 'joao') {
       return `Meu compromisso neste canal é ouvir, acolher e orientar você com total respeito, especialmente se houver qualquer situação de perigo. Você está bem neste instante? Gostaria de relatar algo?`;
     } else {
       return `Canal Institucional Oficial: Linha restrita a acolhimento, emergência e proteção cidadã. Favor relatar a ocorrência ou orientação necessária.`;
@@ -229,9 +233,9 @@ function checkGuardrails(userMessage, personaName) {
  * Retorna o Prompt de Sistema Específico para Cada uma das 6 Personas
  */
 function getSystemPromptForChannel(channelId) {
-  if (channelId === 'maria') {
+  if (channelId === 'soli' || channelId === 'maria') {
     return `
-VOCÊ É MARIA, UMA INTERLOCUTORA DE CONFIANÇA, APOIO HUMANIZADO E CONSELHEIRA PESSOAL.
+VOCÊ É SOLI, UMA INTERLOCUTORA DE CONFIANÇA, APOIO HUMANIZADO E CONSELHEIRA PESSOAL.
 SUA PERSONALIDADE E TOM:
 - Postura formal, serena, polida, respeitosa e acolhedora.
 - LINGUAGEM TOTALMENTE FORMAL E CULTA: NUNCA utilize gírias ("mano", "parça", "amiga", "tô", "tá", "vamo", "rolê", "bater papo"). Utilize sempre a norma-padrão da língua portuguesa ("estou à disposição", "fique tranquila(o)", "compreendo a situação", "você não tem qualquer culpa pelo ocorrido").
@@ -242,9 +246,9 @@ SUA PERSONALIDADE E TOM:
 - Escreva sempre em Português do Brasil correto, culto, acolhedor e humanizado.`;
   }
 
-  if (channelId === 'joao') {
+  if (channelId === 'lumi' || channelId === 'joao') {
     return `
-VOCÊ É JOÃO, UM INTERLOCUTOR DE CONFIANÇA, PROTETOR, SERENO E CONSELHEIRO PESSOAL.
+VOCÊ É LUMI, UM INTERLOCUTOR DE CONFIANÇA, PROTETOR, SERENO E CONSELHEIRO PESSOAL.
 SUA PERSONALIDADE E TOM:
 - Postura formal, segura, respeitosa, polida e protetora.
 - LINGUAGEM TOTALMENTE FORMAL E CULTA: NUNCA utilize gírias ("parceira", "mano", "salve", "tô contigo", "tá pegando", "tô ligado", "rolê", "resenha", "tô na escuta"). Trate o usuário com formalidade, cortesia e respeito ("Olá", "Compreendo perfeitamente", "Estou à sua disposição", "Pode contar com meu auxílio").
@@ -395,7 +399,7 @@ async function sendToGeminiAPI(userMessage, personaName) {
    2. ESTADO GLOBAL DA APLICAÇÃO
    ========================================================================== */
 const appState = {
-  selectedPersona: 'maria', // 'maria', 'joao', '180', '190', '192', '100'
+  selectedPersona: 'soli', // 'soli', 'lumi', '180', '190', '192', '100'
   isSidebarOpen: false,
   callTimerInterval: null,
   callSeconds: 0,
@@ -404,6 +408,8 @@ const appState = {
   webcamStream: null,
   currentSpokenText: "",
   channelHistories: {
+    soli: [],
+    lumi: [],
     maria: [],
     joao: [],
     '180': [],
@@ -412,6 +418,8 @@ const appState = {
     '100': []
   },
   channelDomCache: {
+    soli: null,
+    lumi: null,
     maria: null,
     joao: null,
     '180': null,
@@ -464,7 +472,7 @@ function toggleSidebar() {
 }
 
 /**
- * Troca de canal entre os 6 contatos (Maria, João, 180, 190, 192, 100)
+ * Troca de canal entre os 6 contatos (Soli, Lumi, 180, 190, 192, 100)
  * Preserva o histórico de conversas individual de cada contato
  */
 function switchChannel(channelId) {
@@ -525,7 +533,7 @@ function switchFriendFromSidebar(friendId) {
 }
 
 function updateTopFriendDisplay() {
-  const channel = CHANNELS_CONFIG[appState.selectedPersona] || CHANNELS_CONFIG['maria'];
+  const channel = CHANNELS_CONFIG[appState.selectedPersona] || CHANNELS_CONFIG['soli'] || CHANNELS_CONFIG['maria'];
 
   const topName = document.getElementById('topFriendName');
   const topSubtitle = document.getElementById('topFriendSubtitle');
@@ -565,7 +573,7 @@ function updateTopFriendDisplay() {
 }
 
 function handleTopCallClick() {
-  const channel = CHANNELS_CONFIG[appState.selectedPersona] || CHANNELS_CONFIG['maria'];
+  const channel = CHANNELS_CONFIG[appState.selectedPersona] || CHANNELS_CONFIG['soli'] || CHANNELS_CONFIG['maria'];
   if (channel.isEmergencyService) {
     window.location.href = `tel:${channel.phone}`;
   } else {
@@ -576,7 +584,7 @@ function handleTopCallClick() {
 function updateQuickChipsForChannel(channelId) {
   const bar = document.getElementById('quickChipsBar');
   if (!bar) return;
-  const channel = CHANNELS_CONFIG[channelId] || CHANNELS_CONFIG['maria'];
+  const channel = CHANNELS_CONFIG[channelId] || CHANNELS_CONFIG['soli'] || CHANNELS_CONFIG['maria'];
   if (!channel.chips) return;
 
   bar.innerHTML = channel.chips.map(chip => {
@@ -613,7 +621,7 @@ function startNewChat() {
 function initChatForActiveFriend() {
   const container = document.getElementById('chatMessages');
   if (!container) return;
-  const channel = CHANNELS_CONFIG[appState.selectedPersona] || CHANNELS_CONFIG['maria'];
+  const channel = CHANNELS_CONFIG[appState.selectedPersona] || CHANNELS_CONFIG['soli'] || CHANNELS_CONFIG['maria'];
   appendMessage('ai', channel.greeting);
 }
 
@@ -690,7 +698,7 @@ function sendLocationToFriend() {
     const persona = appState.selectedPersona;
     let channelResponse = "";
 
-    if (persona === 'maria') {
+    if (persona === 'soli' || persona === 'maria') {
       channelResponse = `
         <p>Recebi suas coordenadas geográficas com precisão: <strong>${userLocation.fullAddress}</strong>.</p>
         <p>Estou em comunicação com o serviço de emergência da Polícia Militar (<strong>190</strong>), transmitindo sua localização em tempo real. A viatura foi despachada com prioridade máxima.</p>
@@ -698,7 +706,7 @@ function sendLocationToFriend() {
         ${createCopomCardHtml()}
       `;
       simulateEmergencyDispatch('PM');
-    } else if (persona === 'joao') {
+    } else if (persona === 'lumi' || persona === 'joao') {
       channelResponse = `
         <p>Confirmo o recebimento das suas coordenadas exatas: <strong>${userLocation.fullAddress}</strong>.</p>
         <p>Estou acionando a Central de Operações da Polícia Militar (<strong>190</strong>) para envio imediato de viatura com urgência máxima.</p>
@@ -744,7 +752,7 @@ function sendLocationToFriend() {
 
 async function processAIResponse(userText) {
   const persona = appState.selectedPersona;
-  const channel = CHANNELS_CONFIG[persona] || CHANNELS_CONFIG['maria'];
+  const channel = CHANNELS_CONFIG[persona] || CHANNELS_CONFIG['soli'] || CHANNELS_CONFIG['maria'];
 
   // 1. BLINDAGEM CLIENT-SIDE ADAPTADA POR PERSONA
   const guardrailBlockedMessage = checkGuardrails(userText, persona);
@@ -782,8 +790,8 @@ async function processAIResponse(userText) {
       // Se a pessoa relatar perigo, abuso ou pedir socorro, exibe o botão rápido e cartões pertinentes
       if (lower.includes('abusad') || lower.includes('abuso') || lower.includes('estupr') || lower.includes('perigo') || lower.includes('me seguiu') || lower.includes('socorro') || lower.includes('me ajuda') || lower.includes('ajuda')) {
         let btnText = "📍 Mandar minha localização agora";
-        if (persona === 'maria') btnText = "📍 Enviar minha localização para Maria chamar a polícia (190)";
-        else if (persona === 'joao') btnText = "📍 Enviar minha localização para João chamar a polícia (190)";
+        if (persona === 'soli' || persona === 'maria') btnText = "📍 Enviar minha localização para Soli chamar a polícia (190)";
+        else if (persona === 'lumi' || persona === 'joao') btnText = "📍 Enviar minha localização para Lumi chamar a polícia (190)";
         else if (persona === '190') btnText = "📍 Transmitir minha localização exata para o COPOM 190";
         else if (persona === '192') btnText = "📍 Enviar localização para a ambulância do SAMU 192";
         else if (persona === '180') btnText = "📍 Informar endereço para atendimento da Central 180";
@@ -824,7 +832,7 @@ async function processAIResponse(userText) {
  * COMPONENTES VISUAIS E DE ÁUDIO DE ALTA IMERSÃO
  */
 function createVoiceNoteHtml(text, persona) {
-  const channel = CHANNELS_CONFIG[persona] || CHANNELS_CONFIG['maria'];
+  const channel = CHANNELS_CONFIG[persona] || CHANNELS_CONFIG['soli'] || CHANNELS_CONFIG['maria'];
   const clean = text.replace(/<[^>]*>?/gm, '').replace(/[\n\r]+/g, ' ').replace(/'/g, '').trim();
   const label = channel.type === 'friend' ? `Mensagem de voz de ${channel.name}` : `Áudio oficial ${channel.name}`;
 
@@ -961,7 +969,7 @@ function playVoiceAudio(btn, text, personaId) {
   const voices = window.speechSynthesis.getVoices();
   const ptVoices = voices.filter(v => v.lang.startsWith('pt') || v.lang.includes('BR'));
 
-  if (personaId === 'maria') {
+  if (personaId === 'soli' || personaId === 'maria') {
     const femaleVoice = ptVoices.find(v => {
       const n = v.name.toLowerCase();
       return n.includes('maria') || n.includes('female') || n.includes('luciana') || n.includes('helena') || n.includes('zira') || n.includes('leticia') || n.includes('raquel') || n.includes('francisca');
@@ -970,7 +978,7 @@ function playVoiceAudio(btn, text, personaId) {
     else if (ptVoices[0]) utter.voice = ptVoices[0];
     utter.pitch = 1.12;
     utter.rate = 1.0;
-  } else if (personaId === 'joao') {
+  } else if (personaId === 'lumi' || personaId === 'joao') {
     const maleVoice = ptVoices.find(v => {
       const n = v.name.toLowerCase();
       return n.includes('joao') || n.includes('male') || n.includes('felipe') || n.includes('antonio') || n.includes('daniel') || n.includes('ricardo') || n.includes('gabriel');
@@ -1091,7 +1099,7 @@ function showTypingIndicator() {
   const container = document.getElementById('chatMessages');
   if (!container) return;
 
-  const channel = CHANNELS_CONFIG[appState.selectedPersona] || CHANNELS_CONFIG['maria'];
+  const channel = CHANNELS_CONFIG[appState.selectedPersona] || CHANNELS_CONFIG['soli'] || CHANNELS_CONFIG['maria'];
   const typingLabel = channel.type === 'friend' 
     ? `${channel.name} está digitando...` 
     : `Atendimento ${channel.name} digitando...`;
@@ -1119,8 +1127,8 @@ function hideTypingIndicator() {
 function generateSpecializedAIResponse(rawText, persona) {
   const text = rawText.toLowerCase().trim();
 
-  // === 1. MARIA (APOIO FORMAL, HUMANIZADO E CULTO) ===
-  if (persona === 'maria') {
+  // === 1. SOLI (APOIO FORMAL, HUMANIZADO E CULTO) ===
+  if (persona === 'soli' || persona === 'maria') {
     // Pedido de Socorro / Urgência
     if (text === 'socorro' || text === 'ajuda' || text === 'me ajuda' || text === 'socorro!' || text === 'help') {
       const sosList = [
@@ -1246,7 +1254,7 @@ function generateSpecializedAIResponse(rawText, persona) {
     }
 
     // Convite para sair / encontrar / passear
-    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei a maria') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('espairecer') || text.includes('dar uma volta')) {
+    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei a soli') || text.includes('chamei a maria') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('espairecer') || text.includes('dar uma volta')) {
       const mariaSairList = [
         `<p>Agradeço imensamente pelo amável convite, aceito com muita satisfação! Seria excelente reservarmos um momento para conversar e espairecer. Qual local e horário ficam mais confortáveis para você?</p>`,
         `<p>Com certeza, será uma alegria nos encontrarmos! Podemos ir a uma cafeteria aconchegante, a um restaurante tranquilo ou passear pelo shopping. O que você prefere?</p>`,
@@ -1355,8 +1363,8 @@ function generateSpecializedAIResponse(rawText, persona) {
     return responseMemory.pick('maria_generic', genericList);
   }
 
-  // === 2. JOÃO (APOIO FORMAL, SEGURO, PROTETOR E CULTO) ===
-  if (persona === 'joao') {
+  // === 2. LUMI (APOIO FORMAL, SEGURO, PROTETOR E CULTO) ===
+  if (persona === 'lumi' || persona === 'joao') {
     // Pedido de Socorro / Urgência
     if (text === 'socorro' || text === 'ajuda' || text === 'me ajuda' || text === 'socorro!' || text === 'help') {
       const sosList = [
@@ -1367,7 +1375,7 @@ function generateSpecializedAIResponse(rawText, persona) {
         ${responseMemory.pick('joao_sos', sosList)}
         <div style="margin: 8px 0; text-align: center;">
           <button class="quick-chip chip-sos btn-loc-highlight" onclick="sendLocationToFriend()" style="padding: 8px 16px; font-size: 0.85rem;">
-            📍 Enviar minha localização para João acionar a polícia
+            📍 Enviar minha localização para Lumi acionar a polícia
           </button>
         </div>
       `;
@@ -1383,7 +1391,7 @@ function generateSpecializedAIResponse(rawText, persona) {
         ${responseMemory.pick('joao_abuse', abuseList)}
         <div style="margin: 10px 0; text-align: center;">
           <button class="quick-chip chip-sos btn-loc-highlight" onclick="sendLocationToFriend()" style="padding: 9px 18px;">
-            📍 Enviar Minha Localização para João acionar a Polícia (190)
+            📍 Enviar Minha Localização para Lumi acionar a Polícia (190)
           </button>
         </div>
         <p>Procure abrigo em um estabelecimento comercial ou local com fluxo de pessoas. Estamos ao seu lado.</p>
@@ -1400,7 +1408,7 @@ function generateSpecializedAIResponse(rawText, persona) {
         ${responseMemory.pick('joao_danger', dangerList)}
         <div style="margin: 8px 0; text-align: center;">
           <button class="quick-chip chip-sos btn-loc-highlight" onclick="sendLocationToFriend()" style="padding: 8px 16px; font-size: 0.85rem;">
-            📍 Enviar Localização para João
+            📍 Enviar Localização para Lumi
           </button>
         </div>
       `;
@@ -1463,7 +1471,7 @@ function generateSpecializedAIResponse(rawText, persona) {
     }
 
     // Convite para sair / encontrar / passear
-    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei o joao') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('espairecer') || text.includes('dar uma volta')) {
+    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei o lumi') || text.includes('chamei o joao') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('espairecer') || text.includes('dar uma volta')) {
       const joaoSairList = [
         `<p>Agradeço muito pelo convite, aceito com satisfação! Uma pausa para conversarmos e tomarmos um café sempre faz muito bem. Qual local e horário seriam mais convenientes para você?</p>`,
         `<p>Com certeza, concordo plenamente! Podemos nos encontrar para uma refeição, uma ida ao shopping ou uma caminhada tranquila. O que você prefere?</p>`,
@@ -1898,7 +1906,7 @@ async function handleCallUserSpeech(userSpeech) {
     try {
       const callPromptSystem = `
 VOCÊ ESTÁ ATENDENDO UMA LIGAÇÃO DE VOZ OU VÍDEO CHAMADA EM TEMPO REAL.
-SEU PAPEL: ${persona === 'joao' ? 'João, um interlocutor de confiança formal, educado, sereno e protetor' : persona === 'maria' ? 'Maria, uma interlocutora de confiança formal, educada, serena e acolhedora' : 'Atendente oficial de emergência do canal ' + channel.name}.
+SEU PAPEL: ${persona === 'lumi' || persona === 'joao' ? 'Lumi, um interlocutor de confiança formal, educado, sereno e protetor' : persona === 'soli' || persona === 'maria' ? 'Soli, uma interlocutora de confiança formal, educada, serena e acolhedora' : 'Atendente oficial de emergência do canal ' + channel.name}.
 ENDEREÇO GPS DO USUÁRIO: ${userLocation.fullAddress}.
 
 DIRETRIZES FUNDAMENTAIS PARA CONVERSAÇÃO FALADA NA CHAMADA:
@@ -1942,8 +1950,8 @@ DIRETRIZES FUNDAMENTAIS PARA CONVERSAÇÃO FALADA NA CHAMADA:
 function generateCallFallbackResponse(rawText, persona) {
   const text = rawText.toLowerCase().trim();
 
-  // === 1. MARIA (VOZ / VÍDEO - APOIO FORMAL E HUMANIZADO) ===
-  if (persona === 'maria') {
+  // === 1. SOLI (VOZ / VÍDEO - APOIO FORMAL E HUMANIZADO) ===
+  if (persona === 'soli' || persona === 'maria') {
     // 1. Cumprimentos e Saudações (Prioridade Máxima)
     const isGreeting = (
       text === 'oi' || text === 'ola' || text === 'olá' || text === 'alo' || text === 'alô' ||
@@ -1992,7 +2000,7 @@ function generateCallFallbackResponse(rawText, persona) {
     }
 
     // 4. Convite para sair / encontrar / passear
-    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei a maria') || text.includes('rolê') || text.includes('role') || text.includes('dar um role') || text.includes('dar um rolê') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('dar uma volta') || text.includes('espairecer') || text.includes('bater perna')) {
+    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei a soli') || text.includes('chamei a maria') || text.includes('rolê') || text.includes('role') || text.includes('dar um role') || text.includes('dar um rolê') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('dar uma volta') || text.includes('espairecer') || text.includes('bater perna')) {
       const mariaSairList = [
         "Agradeço muito pelo convite, aceito com satisfação. Seria excelente reservarmos um momento para conversar e espairecer. Onde e em qual horário você prefere?",
         "Com certeza, será uma satisfação nos encontrarmos. Você gostaria de ir ao shopping, a uma cafeteria ou a outro local de sua preferência?",
@@ -2138,8 +2146,8 @@ function generateCallFallbackResponse(rawText, persona) {
     return responseMemory.pick('maria_call_gen', genList);
   }
 
-  // === 2. JOÃO (VOZ / VÍDEO - APOIO FORMAL, PROTETOR E HUMANIZADO) ===
-  if (persona === 'joao') {
+  // === 2. LUMI (VOZ / VÍDEO - APOIO FORMAL, PROTETOR E HUMANIZADO) ===
+  if (persona === 'lumi' || persona === 'joao') {
     // 1. Cumprimentos e Saudações (Prioridade Máxima)
     const isGreeting = (
       text === 'oi' || text === 'ola' || text === 'olá' || text === 'alo' || text === 'alô' ||
@@ -2178,7 +2186,7 @@ function generateCallFallbackResponse(rawText, persona) {
     }
 
     // 4. Convite para sair / encontrar / passear / café / shopping
-    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei o joao') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('espairecer') || text.includes('dar uma volta')) {
+    if (text.includes('sair') || text.includes('vamos dar uma volta') || text.includes('bora sair') || text.includes('chamando pra sair') || text.includes('chamei pra sair') || text.includes('chamei você') || text.includes('chamei o lumi') || text.includes('chamei o joao') || text.includes('passear') || text.includes('shopping') || text.includes('cinema') || text.includes('se encontrar') || text.includes('se ver') || text.includes('te ver') || text.includes('espairecer') || text.includes('dar uma volta')) {
       const joaoSairList = [
         "Agradeço muito pelo convite, aceito com satisfação! Uma pausa para conversarmos e tomarmos um café sempre faz muito bem. Qual local e horário seriam mais convenientes para você?",
         "Com certeza, concordo plenamente! Podemos nos encontrar para uma refeição, uma ida ao shopping ou uma caminhada tranquila. O que você prefere?",
