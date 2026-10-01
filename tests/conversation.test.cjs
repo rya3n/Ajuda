@@ -161,3 +161,43 @@ test('Unknown channels and malformed histories use a safe plain-text default', (
   assert.equal(typeof reply('Oi', 'toString', null), 'string');
   assert.equal(typeof reply('Preciso conversar', 'soli', [null, {}]), 'string');
 });
+
+test('Explicit requests to stop are respected in every channel, even after a long conversation', () => {
+  const history = [
+    { role: 'user', text: 'Estou com medo' },
+    { role: 'model', text: 'Há alguém de confiança a quem você possa pedir apoio?' }
+  ];
+  for (const channel of Object.keys(guidance)) {
+    for (const message of ['Não quero continuar falando.', 'Não quero mais conversar', 'Podemos parar por aqui?', 'Quero encerrar essa conversa', 'Quero parar de conversar', 'Pare de falar comigo']) {
+      const answer = reply(message, channel, history);
+      assert.match(answer, /podemos (parar|encerrar)/i);
+      assert.doesNotMatch(answer, /\?|Já organizamos/);
+    }
+  }
+});
+
+test('Declining a report or an exercise does not stop the conversation', () => {
+  assert.doesNotMatch(reply('Não quero denunciar', '180'), /podemos encerrar/i);
+  const history = [{ role: 'model', text: 'Quer começar um exercício guiado?' }];
+  assert.match(reply('Não quero fazer o exercício', 'soli', history), /exercício de lado.*Prefere conversar/);
+});
+
+test('Soli remains welcoming after the initial follow-up questions have been used', () => {
+  const history = [
+    { role: 'user', text: 'Quero conversar' },
+    { role: 'model', text: 'O que você gostaria que eu entendesse melhor sobre isso?' },
+    { role: 'model', text: 'O que parece mais importante para você neste momento?' },
+    { role: 'model', text: 'Quer continuar falando desse assunto ou pensar em um próximo apoio?' }
+  ];
+  assert.match(reply('Pode continuar', 'soli', history), /continuar no seu ritmo/);
+  assert.doesNotMatch(reply('Pode continuar', 'soli', history), /solicitação real|serviço adequado/);
+});
+
+test('Declining a subject or being unable to speak does not imply ending the conversation', () => {
+  for (const message of ['Não quero conversar sobre isso', 'Não quero mais falar disso']) {
+    assert.match(reply(message, 'soli'), /assunto de lado.*outra coisa/);
+  }
+  assert.doesNotMatch(reply('Não consigo falar', 'soli'), /podemos parar por aqui/);
+  assert.doesNotMatch(reply('Não sei se quero parar de conversar', 'soli'), /podemos parar por aqui/);
+  assert.doesNotMatch(reply('Quero parar o sangramento', '192'), /podemos encerrar/);
+});

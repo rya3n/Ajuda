@@ -125,6 +125,16 @@ function getLocalConversationReply(userText, channelId, history = [], context = 
   if (topic && earlierTopic && topic !== earlierTopic) question = '';
   if (!topic) topic = earlierTopic;
 
+  if (/nao quero (?:mais )?(?:falar|conversar) (?:sobre\b|disso\b|desse assunto\b|desse tema\b)/.test(current)) {
+    return 'Tudo bem, podemos deixar esse assunto de lado. Você prefere falar de outra coisa ou fazer uma pausa?';
+  }
+  const wantsToStop = /nao quero (?:mais )?(?:falar|conversar)\b|nao quero continuar (?:falando|conversando)\b|quero parar de (?:falar|conversar)\b|pare de falar comigo\b|(?:encerrar|terminar) (?:a |esta |essa )?conversa\b|(?:podemos |quero |vamos )?parar por aqui\b/.test(current);
+  if (wantsToStop && !unknown) {
+    return channel === 'soli' || channel === 'professional'
+      ? 'Tudo bem, podemos parar por aqui. Se quiser voltar a conversar, estarei aqui.'
+      : 'Tudo bem, podemos encerrar esta conversa. Se precisar de atendimento real, use o canal oficial.';
+  }
+
   if (/\b(obrigad[oa]|valeu|agradeco)\b/.test(current)) {
     return channel === 'soli' || channel === 'professional'
       ? 'Você pode continuar no seu tempo. Quer retomar o que estávamos conversando ou falar de outra coisa?'
@@ -224,7 +234,10 @@ function getLocalConversationReply(userText, channelId, history = [], context = 
   const next = nextQuestions[channel].find(text => !alreadyAsked(text));
   if (previous.some(turn => turn.role === 'user') || lastModel && !/^(oi|ola|bom dia|boa tarde|boa noite)[.! ]*$/.test(current)) {
     const acknowledgement = unknown ? 'Você pode dizer que não sabe; não precisa preencher o que não conhece.' : no ? 'Entendi sua resposta. Podemos ajustar o próximo passo.' : 'Podemos continuar a partir do que você contou.';
-    return next ? `${acknowledgement} ${next}` : 'Já organizamos algumas possibilidades. Você pode trazer uma nova dúvida; para uma avaliação ou solicitação real, procure o serviço adequado.';
+    if (next) return `${acknowledgement} ${next}`;
+    return channel === 'soli' || channel === 'professional'
+      ? 'Estou acompanhando o que você contou. Você pode continuar no seu ritmo, falar de outra coisa ou fazer uma pausa.'
+      : 'Já organizamos algumas possibilidades. Você pode trazer uma nova dúvida; para uma avaliação ou solicitação real, procure o serviço adequado.';
   }
   const introductions = {
     soli: 'Estou aqui com você. O que está acontecendo ou como você está se sentindo agora?',

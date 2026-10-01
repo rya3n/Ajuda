@@ -73,7 +73,7 @@ Revisão de layout: chamadas de voz e vídeo em nove tamanhos, de 320 × 568 a 1
 
 Correção da chamada de vídeo no PC: reproduzida na prévia do Codex a sobreposição causada pelo CSS antigo em cache. CSS e JavaScript recebem versão na URL, e a legenda/formulário usam posição normal dentro de uma linha separada dos controles. Conferidos os quatro botões sem elementos cobrindo o ponto de clique em 1386 × 700, 818 × 584, 320 × 568 e 844 × 390, inclusive carregando a folha de estilos antiga. O botão de microfone mudou de estado e Encerrar fechou a chamada na prévia.
 
-Áudio das chamadas: o mesmo gerenciador atende voz e vídeo, reinicia o microfone a cada ligação e confirma a escuta somente após o evento de início do reconhecimento. Enquanto a Soli fala, a transcrição pausa; quando a resposta termina, retoma. Mute, respostas antigas e permissões pendentes ficam isolados por sessão. Falhas de permissão, dispositivo, navegador e conexão mostram uma ajuda com nova tentativa, sem reinício em loop.
+Áudio das chamadas: o mesmo gerenciador atende voz e vídeo, reinicia o microfone a cada ligação e confirma a escuta somente após iniciar a captura real de áudio. Enquanto a Soli fala, a transcrição pausa; quando a resposta termina, retoma. Mute, respostas antigas e permissões pendentes ficam isolados por sessão. Falhas de permissão, dispositivo, navegador e conexão mostram uma ajuda com nova tentativa, sem reinício em loop.
 
 Para apresentar com voz, abra http://127.0.0.1:8080/, permita o microfone, aguarde a saudação terminar e fale quando aparecer “Ouvindo você”. Faça uma breve pausa ao terminar a frase. A barra “Entrada do microfone” mostra o som captado; em seguida a transcrição aparece na tela e o canal responde. Enquanto a resposta é falada, a captura pausa e retoma ao terminar. Se não entender o áudio, a ligação continua ouvindo para uma nova tentativa. Mute e Encerrar descartam áudio pendente. Esse fluxo atende tanto voz quanto vídeo.
 
@@ -81,7 +81,9 @@ O serviço nativo de voz da prévia retornava `network`, antes de transcrever qu
 
 Câmera real e ligações telefônicas não foram testadas com hardware/serviços reais. A API Gemini foi testada com respostas simuladas e, após autorização explícita do usuário, com a chave original do projeto. O Google recusou a autenticação real com erro 401. A configuração manual foi removida conforme solicitado.
 
-Conversas: conferidos os 20 presets dos cinco canais na prévia nos três modos: texto, voz e vídeo (60 verificações), incluindo continuidade com respostas curtas. Controles da videochamada visíveis e clicáveis em 320 × 568 e 1386 × 700 após incluir os presets. Os 51 testes JavaScript e 17 testes Python passaram (68 no total). Os testes automatizados cobrem histórico, canais, fila, descarte de respostas antigas, payloads da API, chamadas e proxy. Execute `node --test tests/*.test.cjs` e `python -m unittest discover -s tests -p test_server.py`.
+Conversas: conferidos os 20 presets dos cinco canais na prévia nos três modos: texto, voz e vídeo (60 verificações), incluindo continuidade com respostas curtas. Controles da videochamada visíveis e clicáveis em 320 × 568 e 1386 × 700 após incluir os presets. Os 94 testes JavaScript e 34 testes Python passaram (128 no total). Os testes automatizados cobrem histórico, canais, fila, descarte de respostas antigas, payloads da API, chamadas e proxy. Execute `node --test tests/*.test.cjs` e `python -m unittest discover -s tests -p 'test*.py'`.
+
+Verificação na versão publicada: fala captada no microfone, transcrição e resposta na videochamada. O modelo de voz roda no navegador na Vercel e fica em cache após a primeira preparação. Pedidos explícitos para parar de conversar são respeitados em todos os canais, e os atalhos do chat quebram em linhas para permanecerem visíveis.
 
 ## Mascote
 

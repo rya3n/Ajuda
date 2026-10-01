@@ -188,7 +188,8 @@ h1:focus { outline: none; }
 .chatgpt-input-wrapper { position: static; flex-shrink: 0; background: var(--bg-chat); padding: 12px 24px 17px; }
 body.theme-dark .chatgpt-input-wrapper { background: var(--bg-chat); }
 .chatgpt-disclaimer { max-width: 750px; font-size: .66rem; white-space: normal; }
-.chat-quick-chips .quick-chip { flex-shrink: 0; max-width: none; overflow: visible; }
+.chat-quick-chips { flex-wrap: wrap; overflow-x: visible; white-space: normal; }
+.chat-quick-chips .quick-chip { flex-shrink: 0; min-width: 0; max-width: 100%; overflow: visible; white-space: normal; overflow-wrap: anywhere; text-align: left; }
 .msg-ai .msg-bubble { position: relative; }
 .msg-ai .soli-msg-avatar { width: 45px; height: 48px; float: left; margin: -4px 9px 2px -5px; }
 .voice-note-player { box-shadow: none; border: 1px solid var(--border-subtle); }
