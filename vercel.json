@@ -1,0 +1,11 @@
+{
+  "buildCommand": "node build.js",
+  "outputDirectory": "public",
+  "framework": null,
+  "functions": { "api/chat.js": { "maxDuration": 30 } },
+  "headers": [{ "source": "/(.*)", "headers": [
+    { "key": "X-Content-Type-Options", "value": "nosniff" },
+    { "key": "Permissions-Policy", "value": "microphone=(self), camera=(self), geolocation=(self)" },
+    { "key": "Cache-Control", "value": "no-cache" }
+  ] }]
+}

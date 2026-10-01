@@ -1,0 +1,13 @@
+.git/
+.api-key.json
+.env*
+.voice-deps/
+models/
+tests/
+__pycache__/
+*.py
+requirements-voice.txt
+.speech-check*.wav
+voice-check.html
+node_modules/
+public/

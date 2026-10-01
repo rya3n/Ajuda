@@ -16,7 +16,7 @@
   --bg-chat-container: #FFFFFF;
   --bg-bubble-ai: #FAF5F0;
   --bg-bubble-user: #3E4A34;
-  
+
   --sidebar-bg: #EFE6DC;
   --sidebar-header: #E5D9CC;
   --sidebar-item-hover: rgba(167, 180, 154, 0.24);
@@ -24,7 +24,7 @@
   --sidebar-border: rgba(201, 184, 167, 0.55);
   --sidebar-text: #2E3A2D;
   --sidebar-text-muted: #5F6B58;
-  
+
   --color-terracotta: #C97B5B;
   --color-terracotta-hover: #B5694A;
   --color-sage: #A7B49A;
@@ -32,11 +32,11 @@
   --color-peach: #E8C9B1;
   --color-olive: #3E4A34;
   --color-olive-dark: #2E3A2D;
-  
+
   --text-main: #1F2937;
   --text-muted: #6B7280;
   --border-subtle: #E5E7EB;
-  
+
   --danger-red: #DC2626;
   --warning-amber: #D97706;
   --safe-green: #10B981;
@@ -1252,11 +1252,6 @@ body.theme-dark .dispatch-alert-card {
 }
 
 .video-subtitles-bar {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90%;
   background: rgba(0, 0, 0, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 10px 18px;
@@ -1742,26 +1737,9 @@ body.theme-dark .dispatch-alert-card {
   }
 
   .video-subtitles-bar {
-    position: absolute;
-    bottom: 56px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: 92% !important;
-    max-width: 380px !important;
     padding: 8px 12px !important;
     font-size: 0.76rem !important;
     border-radius: 12px !important;
-    z-index: 12;
-  }
-
-  .video-silent-form {
-    position: absolute;
-    bottom: 10px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: 92% !important;
-    max-width: 380px !important;
-    z-index: 15;
   }
 
   .video-silent-form input {
@@ -2291,15 +2269,8 @@ body.theme-dark .call-silent-input-box input {
 
 /* 5. Input silencioso na vídeo chamada */
 .video-silent-form {
-  position: absolute;
-  bottom: 74px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90%;
-  max-width: 440px;
   display: flex;
   gap: 8px;
-  z-index: 15;
 }
 
 .video-silent-form input {
@@ -2340,5 +2311,4 @@ body.theme-dark .call-silent-input-box input {
   animation: auraPulse 1s infinite alternate !important;
   box-shadow: 0 0 60px rgba(201, 123, 91, 0.6) !important;
 }
-
 

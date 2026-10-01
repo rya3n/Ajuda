@@ -1,0 +1,2 @@
+# Transcrição local em CPU; pacote oficial https://pypi.org/project/faster-whisper/
+faster-whisper==1.2.1

@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+
+.api-key.json
+.voice-deps/
+models/
+.speech-check*.wav
+voice-check.html
+.vercel/
+public/
+node_modules/
+lib/generated-api-key.cjs
