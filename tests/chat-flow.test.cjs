@@ -103,6 +103,18 @@ test('Two rapid messages are queued in order and the second sees the first answe
   ]);
 });
 
+test('A rejected credential is not requested again on every turn and local replies retain context', async () => {
+  const h = createChatHarness(() => ({ ok: false, json: async () => ({ error: 'credentials' }) }));
+  const first = await h.context.queueConversationTurn('Minha mãe caiu e está com dor', '192');
+  const second = await h.context.queueConversationTurn('Ela está acordada e falando comigo', '192');
+  const third = await h.context.queueConversationTurn('Respira bem', '192');
+  assert.equal(h.requests.length, 1, 'The same authentication error must not delay each new message.');
+  assert.match(first, /consciente/i);
+  assert.match(second, /respirando normalmente/i);
+  assert.match(third, /quando|tempo|começou/i);
+  assert.doesNotMatch(third, /consciente\?|respirando normalmente\?/i);
+});
+
 test('New chat invalidates old pending and queued turns without delaying the new history', async () => {
   const waiting = [];
   const h = createChatHarness(() => { const pending = deferred(); waiting.push(pending); return pending.promise; });

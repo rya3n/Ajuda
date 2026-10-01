@@ -248,7 +248,7 @@ for (const type of ['voice', 'video']) {
       h.recognizer.result('Estou com ansiedade', isFinal);
       await h.advance(2200);
       assert.equal(h.utterances.length, count + 1);
-      assert.match(h.utterances.at(-1).text, /respirar|devagar|passo/i);
+      assert.match(h.utterances.at(-1).text, /ansiedade|medo|respirar|devagar|passo/i);
       assert.equal(h.state.callDialogueHistory.filter(turn => turn.role === 'user').length, 1);
       assert.equal(h.manager.isSpeaking, true);
       assert.equal(h.manager.isListening, false, 'Soli must not listen to her own response.');

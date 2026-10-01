@@ -11,6 +11,24 @@ const SOURCES = {
   breathing: 'https://www.nhs.uk/mental-health/self-help/guides-tools-and-activities/breathing-exercises-for-stress/',
   brain: 'https://www.ncbi.nlm.nih.gov/books/NBK20367/'
 };
+const EDUCATION_SOURCES = {
+  trauma: {
+    url: 'https://www.rcpsych.ac.uk/mental-health/translations/portuguese/post-traumatic-stress-disorder-(ptsd)',
+    label: 'Royal College of Psychiatrists'
+  },
+  executive: {
+    url: 'https://repositorio.ufsc.br/handle/123456789/213995',
+    label: 'UFSC'
+  },
+  dissociation: {
+    url: 'https://www.msdmanuals.com/pt/casa/dist%C3%BArbios-de-sa%C3%BAde-mental/transtornos-dissociativos/transtorno-de-despersonaliza%C3%A7%C3%A3o-desrealiza%C3%A7%C3%A3o',
+    label: 'Manual MSD'
+  },
+  plasticity: {
+    url: 'https://jornal.usp.br/artigos/reconectando-pela-neurociencia/',
+    label: 'USP'
+  }
+};
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[char]));
@@ -122,13 +140,13 @@ const educationTopics = [
   {icon:'book', title:'Memória', subtitle:'Quando lembranças aparecem sem convite', text:'Depois de um trauma, lembranças podem voltar de forma intensa. Algumas pessoas também têm dificuldade de lembrar partes do acontecimento.', tip:'Você pode conversar sobre isso com alguém de confiança ou um profissional.', source:'trauma'},
   {icon:'eye', title:'Atenção', subtitle:'Por que se concentrar pode ficar difícil', text:'Sentir-se em alerta e dormir mal pode acompanhar o trauma. A dificuldade de concentração também pode aparecer.', tip:'Escolha uma pequena tarefa e permita-se fazer pausas.', source:'trauma'},
   {icon:'heart', title:'Emoções', subtitle:'Acolha o que você está sentindo', text:'Medo, irritação, culpa e tristeza podem surgir depois de experiências traumáticas. Cada pessoa reage de uma maneira.', tip:'Sentir isso não é sinal de fraqueza. Você pode buscar apoio.', source:'trauma'},
-  {icon:'brain', title:'Funções executivas', subtitle:'Planejamento, escolhas e organização', text:'Planejar, organizar e tomar decisões são habilidades usadas no cotidiano.', tip:'Dividir uma tarefa em partes menores é uma opção para organizar o dia.', source:'brain'},
+  {icon:'brain', title:'Funções executivas', subtitle:'Planejamento, escolhas e organização', text:'Planejar, organizar e tomar decisões são habilidades usadas no cotidiano.', tip:'Dividir uma tarefa em partes menores é uma opção para organizar o dia.', source:'executive'},
   {icon:'pin', title:'Consciência', subtitle:'A sensação de estar no presente', text:'Algumas pessoas sentem desconexão de si ou do ambiente após um trauma.', tip:'Você pode conversar sobre essa experiência com um profissional de saúde.', source:'dissociation'},
-  {icon:'leaf', title:'Neuroplasticidade', subtitle:'O cérebro aprende com experiências', text:'O cérebro pode modificar suas conexões ao aprender. Essa capacidade é chamada neuroplasticidade.', tip:'Cada pessoa tem seu tempo. Buscar acompanhamento pode fazer parte do cuidado.', source:'brain'}
+  {icon:'leaf', title:'Neuroplasticidade', subtitle:'O cérebro aprende com experiências', text:'O cérebro pode modificar suas conexões ao aprender. Essa capacidade é chamada neuroplasticidade.', tip:'Cada pessoa tem seu tempo. Buscar acompanhamento pode fazer parte do cuidado.', source:'plasticity'}
 ];
 function renderEducation() {
   return `${pageIntro('ENTENDER TAMBÉM É CUIDAR','Entenda o que está acontecendo.','Explicações curtas para conhecer suas reações, sem julgamentos.')}
-    <div class="topic-grid">${educationTopics.map(topic => `<details class="topic-card"><summary><span class="topic-icon">${portalIcon(topic.icon)}</span><span><strong>${topic.title}</strong><small>${topic.subtitle}</small></span><span class="details-plus">+</span></summary><div class="topic-content"><p>${topic.text}</p><p class="topic-tip">${topic.tip}</p><a href="${SOURCES[topic.source]}" target="_blank" rel="noopener noreferrer">Ler a fonte (em inglês) ↗</a></div></details>`).join('')}</div>
+    <div class="topic-grid">${educationTopics.map(topic => `<details class="topic-card"><summary><span class="topic-icon">${portalIcon(topic.icon)}</span><span><strong>${topic.title}</strong><small>${topic.subtitle}</small></span><span class="details-plus">+</span></summary><div class="topic-content"><p>${topic.text}</p><p class="topic-tip">${topic.tip}</p><a href="${EDUCATION_SOURCES[topic.source].url}" target="_blank" rel="noopener noreferrer" lang="pt-BR">Ler a fonte em português · ${EDUCATION_SOURCES[topic.source].label} ↗</a></div></details>`).join('')}</div>
     <div class="gentle-note">${portalIcon('heart')}<p>Conteúdo educativo. Se as dificuldades persistirem ou afetarem seu dia, busque um profissional de saúde.</p></div><button class="primary-button" onclick="navigatePortal('articles')">Explorar artigos e conteúdos ${portalIcon('arrow')}</button>`;
 }
 function renderArticles() {

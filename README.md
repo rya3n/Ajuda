@@ -81,9 +81,13 @@ O serviço nativo de voz da prévia retornava `network`, antes de transcrever qu
 
 Câmera real e ligações telefônicas não foram testadas com hardware/serviços reais. A API Gemini foi testada com respostas simuladas e, após autorização explícita do usuário, com a chave original do projeto. O Google recusou a autenticação real com erro 401. A configuração manual foi removida conforme solicitado.
 
-Conversas: conferidos os 20 presets dos cinco canais na prévia nos três modos: texto, voz e vídeo (60 verificações), incluindo continuidade com respostas curtas. Controles da videochamada visíveis e clicáveis em 320 × 568 e 1386 × 700 após incluir os presets. Os 94 testes JavaScript e 34 testes Python passaram (128 no total). Os testes automatizados cobrem histórico, canais, fila, descarte de respostas antigas, payloads da API, chamadas e proxy. Execute `node --test tests/*.test.cjs` e `python -m unittest discover -s tests -p 'test*.py'`.
+Conversas: conferidos os 20 presets dos cinco canais na prévia nos três modos: texto, voz e vídeo (60 verificações), incluindo continuidade com respostas curtas. Controles da videochamada visíveis e clicáveis em 320 × 568 e 1386 × 700 após incluir os presets. Os 109 testes JavaScript e 34 testes Python passaram (143 no total). Os testes automatizados cobrem histórico, canais, fila, descarte de respostas antigas, payloads da API, chamadas e proxy. Execute `node --test tests/*.test.cjs` e `python -m unittest discover -s tests -p 'test*.py'`.
 
 Verificação na versão publicada: fala captada no microfone, transcrição e resposta na videochamada. O modelo de voz roda no navegador na Vercel e fica em cache após a primeira preparação. Pedidos explícitos para parar de conversar são respeitados em todos os canais, e os atalhos do chat quebram em linhas para permanecerem visíveis.
+
+Continuidade das conversas: só a última pergunta fica pendente; afirmações anteriores do assistente não reiniciam etapas. O histórico conserva observações e preferências do usuário, aceita respostas descritivas e diferencia incerteza de confirmação. Perguntas diretas têm prioridade sobre o roteiro. Cenários de vários turnos cobrem todos os canais, texto/voz/vídeo, mudança de assunto, recusa de exercícios e resumos do que já foi relatado. Depois de erro de autenticação, a sessão não repete a mesma requisição a cada mensagem. A contingência local continua sendo uma simulação com assuntos limitados; conversa livre pela API depende de autenticação válida na integração original.
+
+Neuropsicoeducação: os seis temas agora têm links de leitura em português, com traduções oficiais do Royal College of Psychiatrists e materiais da UFSC, Manual MSD e USP. Os links da seção Artigos permanecem os mesmos.
 
 ## Mascote
 
