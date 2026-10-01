@@ -170,7 +170,7 @@ function getDirectConversationReply(current, channel, previous, facts) {
     if (/quem (?:e|eh) voce|seu nome|voce (?:e|eh).*(?:robo|ia|pessoa)/.test(current)) return 'Sou a Soli, uma assistente virtual de acolhimento deste projeto. Posso conversar, ajudar você a organizar o que está sentindo ou acompanhar um exercício, se quiser.';
     if (/sem dinheiro|nao (?:tenho|posso).*pagar|nao tenho dinheiro|gratuit|pelo sus|apoio acessivel|apoio.*orcamento/.test(current)) return 'Não ter dinheiro para uma consulta não impede buscar apoio pelo SUS. Uma UBS pode orientar sobre o cuidado em saúde mental e os serviços da região, incluindo CAPS quando adequado. Você pode começar explicando como isso tem afetado seu dia.';
     if (/o que (?:e|eh).*grounding|como funciona.*grounding/.test(current)) return 'Grounding é um exercício de atenção ao presente: observar o que você vê, toca, ouve, cheira e saboreia, sem se forçar. Podemos fazê-lo devagar, se você quiser.';
-    if (/so (?:quero )?(?:conversar|desabafar)|apenas (?:conversar|desabafar)|sem exercicio/.test(current)) return 'Tudo bem, vamos só conversar, sem exercícios nem pressa para resolver. Pode me contar o que ficou mais pesado para você hoje.';
+    if (/so (?:quero )?(?:conversar|desabafar)|apenas (?:conversar|desabafar)|sem exercicio/.test(current)) return 'Tudo bem, vamos só conversar, sem exercícios nem pressa para resolver. Pode continuar de onde parou; não precisa contar tudo de novo.';
   }
   if (['190', '192'].includes(channel) && /(?:mand|envi|acion|cham).*(?:viatura|ambulancia|socorro)|(?:viatura|ambulancia).*(?:vindo|vem|chegar)/.test(current)) return `Esta demonstração não envia ${channel === '190' ? 'viatura' : 'ambulância'}. Para pedir atendimento real, ligue ${channel} e conte o que está acontecendo e onde.`;
   if (channel === '192' && /como.*(?:consciente|acordad|respirando)|sera que.*(?:consciente|respirando)/.test(current)) return 'Não consigo avaliar o estado da pessoa por esta conversa. Se você não consegue confirmar como ela está ou há urgência, ligue para o 192 real e explique sua dúvida; o atendente orientará você. Não precisa adivinhar uma resposta.';
@@ -217,7 +217,11 @@ function getSupportConversationReply(current, previous, facts) {
   }
   if (/faculdade|prova|estud|aula|apresentacao|materia|conteudo|prazo/.test(current) || study && /dar conta|sem tempo/.test(current)) {
     const question = choose(['O que está pesando mais nos estudos agora?', 'A dificuldade está mais no conteúdo, no prazo ou na cobrança que você sente?', 'Como você gostaria que fosse esse próximo passo nos estudos?']);
-    return `Você trouxe uma preocupação com os estudos.${question ? ` ${question}` : ' Podemos continuar por essa preocupação, sem colocar mais cobrança sobre você.'}`;
+    const acknowledgement = /(?:prova|faculdade|estud).*(?:trabalho|emprego)|(?:trabalho|emprego).*(?:prova|faculdade|estud)/.test(current)
+      ? 'Você está tentando conciliar os estudos e o trabalho, e o tempo ficou apertado.'
+      : /materia|conteudo|dar conta/.test(current) ? 'Essa quantidade de matéria parece estar pesando para você.'
+      : asked('O que está pesando mais nos estudos agora?') ? 'Vamos olhar para essa parte dos estudos que você acabou de contar.' : 'Os estudos parecem estar exigindo bastante de você.';
+    return `${acknowledgement}${question ? ` ${question}` : ' Podemos continuar por essa preocupação, sem colocar mais cobrança sobre você.'}`;
   }
   if (/trabalho|emprego|chefe|cobranca|sobrecarreg|muita coisa|nao dou conta/.test(current)) {
     const question = choose(['Qual parte dessa rotina está exigindo mais de você?', 'Você tem conseguido dividir alguma dessas responsabilidades?', 'O que você gostaria de aliviar primeiro?']);
