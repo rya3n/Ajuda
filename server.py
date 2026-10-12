@@ -349,13 +349,13 @@ class DemoHandler(SimpleHTTPRequestHandler):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Demonstração local Ponto Seguro")
+    parser = argparse.ArgumentParser(description="Demonstração local Bem-vindo")
     parser.add_argument("--port", type=int, default=8080)
     args = parser.parse_args()
     if not 1 <= args.port <= 65535:
         parser.error("A porta precisa estar entre 1 e 65535.")
     server = DemoServer(("127.0.0.1", args.port), Path(__file__).parent)
-    print(f"Ponto Seguro: http://127.0.0.1:{args.port}", flush=True)
+    print(f"Bem-vindo: http://127.0.0.1:{args.port}", flush=True)
     print("Integração original carregada." if server.api_key else "Integração original indisponível. Modo local.", flush=True)
     try:
         server.serve_forever()

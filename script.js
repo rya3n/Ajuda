@@ -1,4 +1,4 @@
-/* Ponto Seguro: chat e chamadas simuladas para uma apresentação acadêmica.
+/* Bem-vindo: chat e chamadas simuladas para uma apresentação acadêmica.
  * portal.js cuida das telas, do mascote e dos exercícios.
  * A integração original é carregada automaticamente pelo servidor local.
  */

@@ -1,5 +1,5 @@
 {
-  "name": "ponto-seguro-demo",
+  "name": "bem-vindo-demo",
   "version": "1.0.0",
   "private": true,
   "scripts": { "build": "node build.js", "test": "node --test tests/*.test.cjs" },

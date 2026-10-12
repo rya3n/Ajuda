@@ -109,7 +109,7 @@ function actionCard(icon, title, subtitle, action, className = '') {
   return `<button class="action-card ${className}" onclick="${action}"><span class="action-symbol">${portalIcon(icon)}</span><strong>${title}</strong><span>${subtitle}</span><span class="card-arrow">${portalIcon('arrow')}</span></button>`;
 }
 function renderHome() {
-  return `<div class="home-hero"><div class="hero-copy"><span class="eyebrow">BEM-VINDO AO PONTO SEGURO</span><h1 tabindex="-1">Aqui, você pode<br> <em>ir no seu tempo.</em></h1><p>Eu sou a Soli. Estou aqui para ouvir, acolher e ajudar você a encontrar apoio.</p><span class="hero-signature">Sempre ao seu lado, no seu tempo.</span></div><div class="hero-mascot"><span class="organic-shape"></span>${soliImage()}<span class="mascot-spark spark-one">✦</span><span class="mascot-spark spark-two">✧</span></div></div>
+  return `<div class="home-hero"><div class="hero-copy"><span class="eyebrow">BEM-VINDO</span><h1 tabindex="-1">Aqui, você pode<br> <em>ir no seu tempo.</em></h1><p>Eu sou a Soli. Estou aqui para ouvir, acolher e ajudar você a encontrar apoio.</p><span class="hero-signature">Sempre ao seu lado, no seu tempo.</span></div><div class="hero-mascot"><span class="organic-shape"></span>${soliImage()}<span class="mascot-spark spark-one">✦</span><span class="mascot-spark spark-two">✧</span></div></div>
     <div class="section-heading"><h2>Como você está agora?</h2><span>Escolha o que você precisa.</span></div>
     <div class="action-grid">
       ${actionCard('alert','Estou em crise','Vamos por partes, juntos.',"navigatePortal('crisis')",'card-crisis')}
