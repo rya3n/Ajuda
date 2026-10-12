@@ -14,6 +14,15 @@ async function preserveOriginalAPI() {
   let key = '';
   try { key = JSON.parse(fs.readFileSync(path.join(__dirname, '.api-key.json'), 'utf8')).apiKey || ''; } catch (_) {}
   if (!key) {
+    // Uma publicação direta pode reutilizar a migração privada já preparada
+    // neste mesmo projeto, sem depender do acesso ao histórico do GitHub.
+    try {
+      const migrated = fs.readFileSync(path.join(__dirname, 'lib', 'generated-api-key.cjs'), 'utf8');
+      const value = JSON.parse(migrated.match(/^module\.exports = (.+);\s*$/)?.[1] || 'null');
+      if (typeof value === 'string') key = value;
+    } catch (_) {}
+  }
+  if (!key) {
     // A revisão anterior é imutável e pertence a este mesmo projeto. A migração
     // reaproveita sua integração embutida, sem campo de chave ou outra API.
     let original;
